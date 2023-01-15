@@ -447,6 +447,9 @@ class MultyPolinomial:
         for c in ('^','<','>'):
             if c in _format_spec:
                 t = _format_spec.split(c)
+                if t[0]:
+                    positioning+=t[0][-1]
+                    t[0] = t[0][:-1]
                 positioning+=c
                 for i,cc in enumerate(t[1]):
                     if cc.isnumeric():
@@ -479,6 +482,7 @@ class MultyPolinomial:
             t = tuple(map(int,power.split("-")))
 
             if not any(t):
+                s+=k
                 continue
 
             for p,i in zip(self._unkn,t):
@@ -520,6 +524,7 @@ class MultyPolinomial:
             t = tuple(map(int,power.split("-")))
 
             if not any(t):
+                s+=k
                 continue
 
             for p,i in zip(self._unkn,t):
@@ -553,7 +558,7 @@ class MultyPolinomial:
     @overload
     def __call__(self, values:Number) -> tuple[Number,str]:
         """
-        values can be a number if and only if Unknowns has only one element, and evaluate this polynom in the given value
+        values can be a number if and only if Unknowns has only one element, and evaluate this polynomial in the given value
         To make only a partial evaluation, use evaluate or evaluate_ip methods
 
         It returns the number of the evaluation and the string representing the Integrals consts
@@ -562,7 +567,7 @@ class MultyPolinomial:
     @overload
     def __call__(self, values:Iterable[Number]) -> tuple[Number,str]:
         """
-        by giving the exact number of Numbers as the number of elements in Unknowns, it evaluates the polynom by replacing each value following the order of Unknowns
+        by giving the exact number of Numbers as the number of elements in Unknowns, it evaluates the polynomial by replacing each value following the order of Unknowns
         To make only a partial evaluation, use evaluate or evaluate_ip methods
 
         It returns the number of the evaluation and the string representing the Integrals consts
@@ -581,8 +586,8 @@ class MultyPolinomial:
     def __call__(self, values:Number|Iterable[Number]|dict[str, Number], __ignore:bool=False) -> Number | tuple[Number,str]:
         """
         values can be either:
-        - a number if and only if Unknowns has only one element, and evaluate this polynom in the given value
-        - an iterable with the exact number of Numbers as the number of elements in Unknowns, it evaluates the polynom by replacing each value following the order of Unknowns
+        - a number if and only if Unknowns has only one element, and evaluate this polynomial in the given value
+        - an iterable with the exact number of Numbers as the number of elements in Unknowns, it evaluates the polynomial by replacing each value following the order of Unknowns
         - a dict by associating the correct value to the right unknown for each one
 
         It returns the number of the evaluation and the string representing the Integrals consts
@@ -650,19 +655,19 @@ class MultyPolinomial:
     @overload
     def evaluate(self, values:Number) -> MultyPolinomial:
         """
-        It returns a copy but making a partial evaluatation of this polynom in the given value replacing the first element in Unknowns
+        It returns a copy but making a partial evaluatation of this polynomial in the given value replacing the first element in Unknowns
         """
 
     @overload
     def evaluate(self, values:Iterable[Number]) -> MultyPolinomial:
         """
-        It returns a copy but making a partial evaluatation of this polynom in the given values replacing the value following the order of Unknowns
+        It returns a copy but making a partial evaluatation of this polynomial in the given values replacing the value following the order of Unknowns
         """
 
     @overload
     def evaluate(self, values:dict[str, Number]) -> MultyPolinomial:
         """
-        It returns a copy but making a partial evaluatation of this polynom replacing each given unknown by its given value
+        It returns a copy but making a partial evaluatation of this polynomial replacing each given unknown by its given value
         """
 
     def evaluate(self, values:Number|Iterable[Number]|dict[str, Number]) -> MultyPolinomial:
@@ -798,19 +803,19 @@ class MultyPolinomial:
     @overload
     def evaluate_ip(self, values:Number) -> None:
         """
-        It updates it by making a partial evaluatation of this polynom in the given value replacing the first element in Unknowns
+        It updates it by making a partial evaluatation of this polynomial in the given value replacing the first element in Unknowns
         """
 
     @overload
     def evaluate_ip(self, values:Iterable[Number]) -> None:
         """
-        It updates it by making  a partial evaluatation of this polynom in the given values replacing the value following the order of Unknowns
+        It updates it by making  a partial evaluatation of this polynomial in the given values replacing the value following the order of Unknowns
         """
 
     @overload
     def evaluate_ip(self, values:dict[str, Number]) -> None:
         """
-        It updates it by making  a partial evaluatation of this polynom replacing each given unknown by its given value
+        It updates it by making  a partial evaluatation of this polynomial replacing each given unknown by its given value
         """
 
     def evaluate_ip(self, values:Number|Iterable[Number]|dict[str, Number]) -> None:
@@ -950,31 +955,25 @@ class MultyPolinomial:
     @overload
     def deg(self) -> int:
         """
-        it returns the maximum degree of the polynom
+        it returns the maximum degree of the polynomial
         """
 
     @overload
     def deg(self, unknown:str) -> int:
         """
-        it returns the maximum degree regarding the given unknown of the polynom
+        it returns the maximum degree regarding the given unknown of the polynomial
         """
 
     def deg(self, unknown:str|None=None) -> int:
         if not unknown:
-            if len(self._pcoef)<2 and not len(self._icoef):
-                for power in self._pcoef:
-                    return eval(power.replace("-","+"))
-            return max(*tuple(eval(power.replace("-","+")) for power in self._pcoef),*tuple(eval(power.replace("-","+")) for power in self._icoef))
+            return max(0,0,*tuple(eval(power.replace("-","+")) for power,coef in self._pcoef.items() if coef),*tuple(eval(power.replace("-","+")) for power,coef in self._icoef.items() if coef))
         
         if unknown not in self._unkn:
             return 0
             
         index = self._unkn.index(unknown)
-        if len(self._pcoef)<2 and not len(self._icoef):
-            for power in self._pcoef:
-                return int(power.split("-")[index])
         
-        return max(*tuple(int(power.split("-")[index]) for power in self._pcoef),*tuple(int(power.split("-")[index]) for power in self._icoef))
+        return max(0,0,*tuple(int(power.split("-")[index]) for power in self._pcoef),*tuple(int(power.split("-")[index]) for power in self._icoef))
 
     def degs(self) -> Generator[int]:
         """
@@ -986,13 +985,13 @@ class MultyPolinomial:
     @overload
     def monoms(self) -> Generator[MultyPolinomial]:
         """
-        It returns all the monoms of this polynom
+        It returns all the monoms of this polynomial
         """
 
     @overload
     def monoms(self, __ignore=False) -> Generator[MultyPolinomial]:
         """
-        It returns all the monoms of this polynom except the Integrals constants if __ignore is True
+        It returns all the monoms of this polynomial except the Integrals constants if __ignore is True
         """
 
     def monoms(self, __ignore=False) -> Generator[MultyPolinomial]:
@@ -1202,6 +1201,9 @@ class MultyPolinomial:
         It returns False if and only if this is 0
         """
         return any(self._pcoef.values()) or any(i[1] for i in self._icoef.values())
+
+    def is_a_number(self) -> bool:
+        return not self.deg() and not any(coef[1] for coef in self._icoef.values())
 
     def update(self, __o:MultyPolinomial) -> None:
         """
@@ -1541,6 +1543,7 @@ class MultyPolinomial:
         return self.__class__({power:abs(coef) for power,coef in self._pcoef.items() if coef}, self._unkn, {power:[coef[0],abs(coef[1])] for power,coef in self._icoef.items() if coef})
 
     def __add__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "Add a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1579,6 +1582,7 @@ class MultyPolinomial:
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
     def __radd__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "Add a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1617,6 +1621,7 @@ class MultyPolinomial:
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
     def __iadd__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "Add a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1659,6 +1664,7 @@ class MultyPolinomial:
         return self
 
     def __sub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "subtract a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1697,6 +1703,7 @@ class MultyPolinomial:
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
     def __rsub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "Add this MultyPolinomial to a number or another MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1735,6 +1742,7 @@ class MultyPolinomial:
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
     def __isub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "subtract a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1777,6 +1785,7 @@ class MultyPolinomial:
         return self
 
     def __mul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1833,6 +1842,7 @@ class MultyPolinomial:
         return self.__class__( {power:coef*__o for power,coef in self._pcoef.items()},self._unkn,{power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
     def __rmul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1889,6 +1899,7 @@ class MultyPolinomial:
         return self.__class__( {power:coef*__o for power,coef in self._pcoef.items()},self._unkn,{power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
     def __imul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+        "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1952,6 +1963,7 @@ class MultyPolinomial:
         return self
 
     def __pow__(self,__o:int) -> MultyPolinomial:
+        "elevate this MultyPolinomial to the given positive integer power"
         if not isinstance(__o,int) or __o<0:
             raise Exception("The exponential can only be done with Natural values")
 
@@ -1964,6 +1976,7 @@ class MultyPolinomial:
         return t
 
     def __ipow__(self,__o:int) -> MultyPolinomial:
+        "elevate this MultyPolinomial to the given positive integer power"
         if type(__o) != int or __o<0:
             raise Exception("The exponential can only be done with Natural values")
 
@@ -1979,6 +1992,7 @@ class MultyPolinomial:
         return self
 
     def __truediv__(self, __o:Number) -> MultyPolinomial:
+        "Divide this MultyPolinomial bythe given number"
         if isinstance(__o,Number):
             return self.__class__({power:coef/__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]/__o] for power,coef in self._icoef.items()})
         if isinstance(__o,MultyPolinomial):
@@ -1986,11 +2000,15 @@ class MultyPolinomial:
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
     def __rtruediv__(self, __o:Never) -> MultyPolinomial:
-        if isinstance(__o,MultyPolinomial):
-            raise Exception("Division between MultyPolinomial non implemented yet")
-        raise Exception(f"Impossible to divide anything with a MultyPolinomial")
+        if not self.deg():
+            t = self.__str__()
+            if t[t[0] in ("+","-"):].isnumeric():
+                return __o/float(t)
+
+        raise Exception(f"Impossible to divide anything with a MultyPolinomial if it is not a number")
 
     def __itruediv__(self, __o:Number) -> MultyPolinomial:
+        "Divide this MultyPolinomial bythe given number"
         if isinstance(__o,Number):
             
             for power in self._pcoef:
@@ -2006,6 +2024,10 @@ class MultyPolinomial:
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
     def divmod(self, __o:Number|MultyPolinomial) -> tuple[MultyPolinomial,MultyPolinomial]:
+        """
+        Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
+        This method returns the factor and the rest
+        """
         if not __o:
             raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
 
@@ -2068,6 +2090,10 @@ class MultyPolinomial:
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
     def __floordiv__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
+        """
+        Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
+        This method returns the factor
+        """
         if not __o:
             raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
 
@@ -2129,6 +2155,10 @@ class MultyPolinomial:
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
     def __ifloordiv__(self, __o:Number|MultyPolinomial) -> None:
+        """
+        Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
+        This method returns the factor
+        """
         if not __o:
             raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
 
@@ -2196,6 +2226,10 @@ class MultyPolinomial:
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
     def __mod__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
+        """
+        Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
+        This method returns the rest
+        """
         if not __o:
             raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
         
@@ -2251,6 +2285,11 @@ class MultyPolinomial:
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
     def __imod__(self, __o:Number|MultyPolinomial) -> None:
+        """
+        Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
+        This method returns the rest
+        """
+
         if not __o:
             raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
 

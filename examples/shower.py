@@ -38,28 +38,63 @@ class shower:
         self.m = m
 
         if print_all:
-            self.print()
-            self.format()
-            self.repr()
-            self.infos()
-            print("\n")
+            self.beautiful_print()
+            # self.repr()
+            # self.print()
+            # self.format()
+            # self.infos()
+            # print("\n")
 
-    def print(self) -> None:
+    def string(self) -> None:
         "it prints the MultyPolinomial"
 
-        print(self.m)
+        return self.m.__str__()
 
     def format(self) -> None:
         "it prints the MultyPolinomial formatted"
 
-        print(f"{self.m:+i<15}")
+        return self.m.__format__("<15i+")
 
     def repr(self) -> None:
         "it prints the repr of the MultyPolinomial"
 
-        print(self.m.__repr__())
+        return self.m.__repr__()
 
     def infos(self) -> None:
         "it prints all the values separately"
 
-        print("",*self.m.all,sep="\n\t")
+        return map(str, self.m.all)
+
+    def beautiful_print(self) -> None:
+        s = self.string()
+        f = self.format()
+        r = self.repr()
+        i,j,k = self.infos()
+        l = len(max(s,f,r,i,j,k, key=lambda x: len(x)))+6
+        self._print_rect(l,s,r,f,i,j,k)
+
+    @staticmethod
+    def _open_rect(length:int, title:str) -> str:
+        t=f'{title:^{len(title)+2}}'
+        t=f'{t:=^{length-2}}'
+        return f'{t:#^{length}}'
+
+    @staticmethod
+    def _border_rect(length:int, what:str='') -> str:
+        t=f'{what:^{length-2}}'
+        return f'{t:#^{length}}'
+
+    @staticmethod
+    def _close_rect(length:int) -> str:
+        return f'{"":#^{length}}'
+
+    def _print_rect(self,length:int, title:str, *what:str) -> None:
+        print(self._open_rect(length,title))
+        print(self._border_rect(length))
+        for arg in what:
+            print(self._border_rect(length))
+            print(self._border_rect(length,arg))
+            
+        print(self._border_rect(length))
+        print(self._close_rect(length))
+        print("\n")

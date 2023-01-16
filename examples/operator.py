@@ -36,8 +36,10 @@ class operator:
         
     def __init__(self, m1:MultyPolinomial, m2:MultyPolinomial|Number, print_all:bool=True) -> None:
         
-        self.m1 = m1
+        self.m1 = m1.clean()
         self.m2 = m2
+        if isinstance(m2,MultyPolinomial):
+            self.m2.clean_ip()
 
         if print_all:
             self.beautiful_print()

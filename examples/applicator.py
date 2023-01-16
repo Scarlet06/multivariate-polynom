@@ -15,7 +15,7 @@ if __name__ == '__main__':
     sys.path.append(parent)
 
 from Polynomial import MultyPolinomial,Self,overload,Number
-from collections.abc import Callable
+from random import choices
 
 class applicator:
 
@@ -76,12 +76,30 @@ class applicator:
 
         return str(r==s)
 
+    def n_partial(self) -> bool:
+        "this method applies a partial derivation to x, x and y"
+        
+        r = self.m.n_partial(*self.m._unkn)
+        s = self.m.copy()
+        s.n_partial_ip(*self.m._unkn)
+
+        return str(r==s)
+
     def integral(self) -> bool:
         "this method applies a partial derivation"
         
         r = self.m.integral(self.m.unknown[0])
         s = self.m.copy()
         s.integral_ip(self.m.unknown[0])
+
+        return str(r==s)
+
+    def n_integral(self) -> bool:
+        "this method applies a partial derivation to x, x and y"
+        
+        r = self.m.n_integral(*self.m._unkn)
+        s = self.m.copy()
+        s.n_integral_ip(*self.m._unkn)
 
         return str(r==s)
 
@@ -94,14 +112,27 @@ class applicator:
 
         return str(r==s)
 
+    def n_integralAB(self) -> bool:
+        "this method applies a partial derivation to x, x and y"
+
+        k = {u:(self.a,self.b) for u in self.m._unkn}
+        r = self.m.n_integralAB(**k)
+        s = self.m.copy()
+        s.n_integralAB_ip(**k)
+
+        return str(r==s)
+
     def beautiful_print(self):
-        m=self.m
+        m=self.m.clean()
         print(f"{chr(9487)}{chr(9473)*2} {m=}")
-        print(f"{chr(9504)}{'evaluation:':<20}{self.evaluate()}")
-        print(f"{chr(9504)}{'full evaluation:':<20}{self.evaluate_all()}")
-        print(f"{chr(9504)}{'partial:':<20}{self.partial()}")
-        print(f"{chr(9504)}{'integral:':<20}{self.integral()}")
-        print(f"{chr(9504)}{'integral [a,b]:':<20}{self.integral_AB()}")
+        print(f"{chr(9504)}{chr(9472)}{'evaluation:':<20}{self.evaluate()}")
+        print(f"{chr(9504)}{chr(9472)}{'full evaluation:':<20}{self.evaluate_all()}")
+        print(f"{chr(9504)}{chr(9472)}{'partial:':<20}{self.partial()}")
+        print(f"{chr(9504)}{chr(9472)}{'n partial:':<20}{self.n_partial()}")
+        print(f"{chr(9504)}{chr(9472)}{'integral:':<20}{self.integral()}")
+        print(f"{chr(9504)}{chr(9472)}{'n integral:':<20}{self.n_integral()}")
+        print(f"{chr(9504)}{chr(9472)}{'integral [a,b]:':<20}{self.integral_AB()}")
+        print(f"{chr(9504)}{chr(9472)}{'n integral [a,b]:':<20}{self.n_integralAB()}")
 
 if __name__ == "__main__":
     from creator import m_random_unkn

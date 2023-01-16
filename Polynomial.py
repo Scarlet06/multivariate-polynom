@@ -474,34 +474,30 @@ class MultyPolinomial:
             if not coef:
                 continue
 
-            if coef == floor(coef):
-                coef = floor(coef)
-
             k=f"{coef:{_format_spec}}"
 
             t = tuple(map(int,power.split("-")))
 
-            if not any(t):
-                s+=k
-                continue
+            if any(t):
 
-            for p,i in zip(self._unkn,t):
-                
-                if not i:
-                    continue
+                for p,i in zip(self._unkn,t):
+                    
+                    if not i:
+                        continue
 
-                if not k[-1] in h:
-                    k+=f"*{p}"
-                else:
-                    k+=f"{p}"
+                    if not k.endswith(h):
+                        k+=f"*{p}"
+                    else:
+                        k+=f"{p}"
 
-                if i>=2:
-                    k+=f"^{i}"
+                    if i>=2:
+                        k+=f"^{i}"
             
             if positioning:
-                s+=f'{k:{positioning}}'
+                s+=f'{"+"*(not k.startswith(h))}{k:{positioning}}'
             else:
-                s+=k
+                s+=f'{"+"*(not k.startswith(h))}{k}'
+
 
         if breaker:
             if not s:
@@ -515,32 +511,27 @@ class MultyPolinomial:
 
             if not coef[1]:
                 continue
-            
-            if coef[1] == floor(coef[1]):
-                coef[1] = floor(coef[1])
 
             k=f"{coef[1]:{_format_spec}}*{coef[0]}"
 
             t = tuple(map(int,power.split("-")))
 
             if not any(t):
-                s+=k
-                continue
 
-            for p,i in zip(self._unkn,t):
-                
-                if not i:
-                    continue
-                
-                k+=f"{p}"
+                for p,i in zip(self._unkn,t):
+                    
+                    if not i:
+                        continue
+                    
+                    k+=f"*{p}"
 
-                if i>=2:
-                    k+=f"^{i}"
+                    if i>=2:
+                        k+=f"^{i}"
             
             if positioning:
-                s+=f'{k:{positioning}}'
+                s+=f'{"+"*(not k.startswith(h))}{k:{positioning}}'
             else:
-                s+=k
+                s+=f'{"+"*(not k.startswith(h))}{k}'
 
         if not s:
             s =f"{0:{_format_spec}}"
@@ -1656,10 +1647,10 @@ class MultyPolinomial:
             raise TypeError(f"MultyPolinomial cannot be added to <{type(__o)}>")
 
         power = ("0-"*len(self._unkn)).strip("-")
-        if power in t:
-            self[power]+=__o
+        if power in self._pcoef:
+            self._pcoef[power]+=__o
         else:
-            self[power] =__o
+            self._pcoef[power] =__o
         
         return self
 
@@ -1777,10 +1768,10 @@ class MultyPolinomial:
             raise TypeError(f"MultyPolinomial cannot be subtracted by <{type(__o)}>")
 
         power = ("0-"*len(self._unkn)).strip("-")
-        if power in t:
-            self[power]-=__o
+        if power in self._pcoef:
+            self._pcoef[power]-=__o
         else:
-            self[power] =-__o
+            self._pcoef[power] =-__o
         
         return self
 
@@ -1958,6 +1949,7 @@ class MultyPolinomial:
 
         for power in self._pcoef:
             self._pcoef[power]*=__o
+
         for power in self._icoef:
             self._icoef[power][1]*=__o
         return self
@@ -2154,7 +2146,7 @@ class MultyPolinomial:
 
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
-    def __ifloordiv__(self, __o:Number|MultyPolinomial) -> None:
+    def __ifloordiv__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the factor
@@ -2284,7 +2276,7 @@ class MultyPolinomial:
         
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
-    def __imod__(self, __o:Number|MultyPolinomial) -> None:
+    def __imod__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the rest
@@ -2348,3 +2340,6 @@ class MultyPolinomial:
 
 if __name__ == '__main__':
     print(MultyPolinomial.fromText("-x-x*y^2","y"))
+    from examples import m_text
+    k = m_text.copy()
+    k*=18.7

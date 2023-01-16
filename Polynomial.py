@@ -667,15 +667,15 @@ class MultyPolinomial:
         it={}
         pcoef=self._pcoef.copy()
         pt = {}
-        unkn = list(self._unkn)
         if isinstance(values, Number):
 
             for power,coef in pcoef.items():
                 power = list(map(int,power.split("-")))
 
                 coef*=values**power[0]
+                power[0] = 0
 
-                power = "-".join(map(str,power[1:]))
+                power = "-".join(map(str,power))
                 if power in pt:
                     pt[power]+=coef
                 else:
@@ -689,8 +689,9 @@ class MultyPolinomial:
                 power = list(map(int,power.split("-")))
 
                 coef[1]*=values**power[0]
+                power[0]=0
 
-                power = "-".join(map(str,power[1:]))
+                power = "-".join(map(str,power))
                 if power in it:
                     it[power][0]+="*"+coef[0]
                     it[power][1]+=coef[1]
@@ -701,24 +702,23 @@ class MultyPolinomial:
             icoef.update(it)
             it.clear()
 
-            return self.__class__(pcoef,tuple(unkn[1:]),icoef)
+            return self.__class__(pcoef,self._unkn,icoef)
 
         if not isinstance(values, Iterable):
             raise TypeError("'values' can be either a Number, a tuple of Numbers or a dict of Numbers")
 
         if isinstance(values,dict):
             for unk,val in values.items():
-                if not unk in unkn:
+                if not unk in self._unkn:
                     continue
 
-                index = unkn.index(unk)
-                unkn.pop(index)
+                index = self._unkn.index(unk)
 
                 for power,coef in pcoef.items():
                     power = list(map(int,power.split("-")))
 
                     coef*=val**power[index]
-                    del power[index]
+                    power[index]=0
 
                     power = "-".join(map(str,power))
                     if power in pt:
@@ -734,7 +734,7 @@ class MultyPolinomial:
                     power = list(map(int,power.split("-")))
 
                     coef[1]*=val**power[index]
-                    del power[index]
+                    power[index]=0
 
                     power = "-".join(map(str,power))
                     if power in it:
@@ -747,20 +747,17 @@ class MultyPolinomial:
                 icoef.update(it)
                 it.clear()
 
-            return self.__class__(pcoef,tuple(unkn),icoef)
+            return self.__class__(pcoef,self._unkn,icoef)
                 
         for unk,val in zip(self._unkn,values):
-            if not unk in unkn:
-                continue
 
-            index = unkn.index(unk)
-            unkn.pop(index)
+            index = self._unkn.index(unk)
 
             for power,coef in pcoef.items():
                 power = list(map(int,power.split("-")))
 
                 coef*=val**power[index]
-                del power[index]
+                power[index]=0
 
                 power = "-".join(map(str,power))
                 if power in pt:
@@ -776,7 +773,7 @@ class MultyPolinomial:
                 power = list(map(int,power.split("-")))
 
                 coef[1]*=val**power[index]
-                del power[index]
+                power[index] = 0
 
                 power = "-".join(map(str,power))
                 if power in it:
@@ -789,7 +786,7 @@ class MultyPolinomial:
             icoef.update(it)
             it.clear()
 
-        return self.__class__(pcoef,tuple(unkn),icoef)
+        return self.__class__(pcoef,self._unkn,icoef)
 
     @overload
     def evaluate_ip(self, values:Number) -> None:
@@ -813,15 +810,15 @@ class MultyPolinomial:
 
         it={}
         pt = {}
-        unkn = list(self._unkn)
         if isinstance(values, Number):
 
             for power,coef in self._pcoef.items():
                 power = list(map(int,power.split("-")))
 
                 coef*=values**power[0]
+                power[0]=0
 
-                power = "-".join(map(str,power[1:]))
+                power = "-".join(map(str,power))
                 if power in pt:
                     pt[power]+=coef
                 else:
@@ -834,8 +831,9 @@ class MultyPolinomial:
                 power = list(map(int,power.split("-")))
 
                 coef[1]*=values**power[0]
+                power[0]=0
 
-                power = "-".join(map(str,power[1:]))
+                power = "-".join(map(str,power))
                 if power in it:
                     it[power][0]+="*"+coef[0]
                     it[power][1]+=coef[1]
@@ -845,7 +843,6 @@ class MultyPolinomial:
             self._icoef.clear()
             self._icoef.update(it)
 
-            self._unkn = tuple(unkn)
             return 
 
         if not isinstance(values, Iterable):
@@ -853,17 +850,14 @@ class MultyPolinomial:
 
         if isinstance(values,dict):
             for unk,val in values.items():
-                if not unk in unkn:
-                    continue
 
-                index = unkn.index(unk)
-                unkn.pop(index)
+                index = self._unkn.index(unk)
 
                 for power,coef in self._pcoef.items():
                     power = list(map(int,power.split("-")))
 
                     coef*=val**power[index]
-                    del power[index]
+                    power[index]=0
 
                     power = "-".join(map(str,power))
                     if power in pt:
@@ -879,7 +873,7 @@ class MultyPolinomial:
                     power = list(map(int,power.split("-")))
 
                     coef[1]*=val**power[index]
-                    del power[index]
+                    power[index]=0
 
                     power = "-".join(map(str,power))
                     if power in it:
@@ -892,21 +886,17 @@ class MultyPolinomial:
                 self._icoef.update(it)
                 it.clear()
 
-            self._unkn = tuple(unkn)
             return
                 
         for unk,val in zip(self._unkn,values):
-            if not unk in unkn:
-                continue
 
-            index = unkn.index(unk)
-            unkn.pop(index)
+            index = self._unkn.index(unk)
 
             for power,coef in self._pcoef.items():
                 power = list(map(int,power.split("-")))
 
                 coef*=val**power[index]
-                del power[index]
+                power[index]=0
 
                 power = "-".join(map(str,power))
                 if power in pt:
@@ -922,7 +912,7 @@ class MultyPolinomial:
                 power = list(map(int,power.split("-")))
 
                 coef[1]*=val**power[index]
-                del power[index]
+                power[index] =0
 
                 power = "-".join(map(str,power))
                 if power in it:
@@ -934,8 +924,6 @@ class MultyPolinomial:
             self._icoef.clear()
             self._icoef.update(it)
             it.clear()
-
-        self._unkn = tuple(unkn)
 
     def __len__(self) -> int:
         """
@@ -1044,6 +1032,8 @@ class MultyPolinomial:
             return self.__class__(_pcoef,self._unkn,self._icoef)
         
         unkn = tuple(unknown for i,unknown in enumerate(self._unkn) if t[i])
+        if not unkn:
+            unkn = self._unkn[0]
         pcoef = {"-".join(p for i,p in enumerate(power.split("-"))if t[i]):coef for power,coef in _pcoef.items()}
         icoef = {"-".join(p for i,p in enumerate(power.split("-"))if t[i]):coef for power,coef in _icoef.items()}
 
@@ -1093,7 +1083,10 @@ class MultyPolinomial:
             self._unkn = ()
             return
 
+        unkn = self._unkn[0]
         self._unkn = tuple(unknown for i,unknown in zip(t,self._unkn) if i)
+        if not self._unkn:
+            self._unkn = unkn
         self._pcoef.update({"-".join(p for i,p in zip(t,power.split("-")) if i):coef for power,coef in pcoef.items()})
         self._icoef.update({"-".join(p for i,p in zip(t,power.split("-")) if i):coef for power,coef in icoef.items()})
 
@@ -1337,7 +1330,7 @@ class MultyPolinomial:
         """
 
         if unknown not in self._unkn:
-            return self.__class__({coef+"-1":power for coef,power in self._pcoef.items()},self._unkn+(unknown,),{coef+"-1":power for coef,power in self._icoef.items()}|{("0-"*(len(self._unkn)+1))[:-1]:[f"C{len(self._icoef)}",1]})
+            return self.__class__({coef+"-1":power for coef,power in self._pcoef.items()},self._unkn+(unknown,),{coef+"-1":power.copy() for coef,power in self._icoef.items()}|{("0-"*(len(self._unkn)+1))[:-1]:[f"C{len(self._icoef)}",1]})
 
         index = self._unkn.index(unknown)
 
@@ -1392,7 +1385,7 @@ class MultyPolinomial:
             coef[1]/=power[index]
             self._icoef["-".join(map(str,power))] = coef
 
-        self._icoef[("0-"*(len(self._unkn)+1)).strip("-")] = [f"C{len(icoef)}",1]
+        self._icoef[("0-"*len(self._unkn)).strip("-")] = [f"C{len(icoef)}",1]
         return 
 
     @overload
@@ -2340,6 +2333,3 @@ class MultyPolinomial:
 
 if __name__ == '__main__':
     print(MultyPolinomial.fromText("-x-x*y^2","y"))
-    from examples import m_text
-    k = m_text.copy()
-    k*=18.7

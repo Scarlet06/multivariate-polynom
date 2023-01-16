@@ -45,3 +45,7 @@ m_random:Multy_X = MultyPolinomial.random(2)
 m_random_unkn:Multy_XY = MultyPolinomial.random(3,"y","x")
 #   -> eg: -x^2*y + 4*y*x, max deg is 4 but y can have max power 1
 m_random_dict:Multy_XY = MultyPolinomial.random(4,"x",y=1)
+
+
+if __name__ == '__main__':
+    print(m_dict)

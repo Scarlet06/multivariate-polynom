@@ -19,7 +19,7 @@ from collections.abc import Callable
 
 class applicator:
 
-    __slots__ = ("m1","a", "b")
+    __slots__ = ("m", "a", "b", 'c')
     def __new__(cls: type[Self], m:MultyPolinomial, a:Number, b:Number, print_all:bool=True) -> Self:
         
         if not isinstance(m,MultyPolinomial):
@@ -30,8 +30,7 @@ class applicator:
 
         return super().__new__(cls)
         
-    @overload
-    def __new__(self: type[Self], m:MultyPolinomial, a:Number, b:Number) -> None:
+    def __init__(self: type[Self], m:MultyPolinomial, a:Number, b:Number) -> None:
         "Given a MultyPolinomial, it prints some applications using the given numbers"
         
     @overload
@@ -43,12 +42,68 @@ class applicator:
         self.m = m
         self.a = a
         self.b = b
+        self.c=(b+a)/2
 
         if print_all:
-            ...
+            self.beautiful_print()
+
+    def evaluate(self) -> bool:
+        "this evaluates the MultyPolinomial in the median point in the first unknown"
+
+        r = self.m.evaluate(self.c)
+        s = self.m.copy()
+        s.evaluate_ip(self.c)
+
+        return str(r==s)
+
+    def evaluate_all(self) -> bool:
+        "this evaluates the MultyPolinomial in the median point in the first unknown"
+
+        r = self.m.evaluate([self.c]*len(self.m))
+        s = MultyPolinomial.fromText(str(self.m([self.c]*len(self.m),True)),self.m.unknown)
+
+        t = self.m.copy()
+        t.evaluate_ip([self.c]*len(self.m))
+
+        return str(all((r==s,r==t,t==s)))
+
+    def partial(self) -> bool:
+        "this method applies a partial derivation"
+        
+        r = self.m.partial(self.m.unknown[0])
+        s = self.m.copy()
+        s.partial_ip(self.m.unknown[0])
+
+        return str(r==s)
+
+    def integral(self) -> bool:
+        "this method applies a partial derivation"
+        
+        r = self.m.integral(self.m.unknown[0])
+        s = self.m.copy()
+        s.integral_ip(self.m.unknown[0])
+
+        return str(r==s)
+
+    def integral_AB(self) -> bool:
+        "this method applies a partial derivation"
+        
+        r = self.m.integralAB(self.m.unknown[0],self.a,self.b)
+        s = self.m.copy()
+        s.integralAB_ip(self.m.unknown[0],self.a,self.b)
+
+        return str(r==s)
+
+    def beautiful_print(self):
+        m=self.m
+        print(f"{chr(9487)}{chr(9473)*2} {m=}")
+        print(f"{chr(9504)}{'evaluation:':<20}{self.evaluate()}")
+        print(f"{chr(9504)}{'full evaluation:':<20}{self.evaluate_all()}")
+        print(f"{chr(9504)}{'partial:':<20}{self.partial()}")
+        print(f"{chr(9504)}{'integral:':<20}{self.integral()}")
+        print(f"{chr(9504)}{'integral [a,b]:':<20}{self.integral_AB()}")
 
 if __name__ == "__main__":
-    a = MultyPolinomial({"3-5-4":1/3,"5-4-3":1/5,"6-3-2":1/7},("x","y","z"))
-    b = MultyPolinomial({"2-1-0":1/3,"1-0-1":1/5,"0-0-2":1/7},("x","y","z"))
-    applicator(a,b)
+    from creator import m_random_unkn
+    applicator(m_random_unkn, 2, 5)
     

@@ -45,23 +45,23 @@ class shower:
             # self.infos()
             # print("\n")
 
-    def string(self) -> None:
+    def string(self) -> str:
         "it prints the MultyPolinomial"
 
         return self.m.__str__()
 
-    def format(self) -> None:
+    def format(self) -> str:
         "it prints the MultyPolinomial formatted"
 
         return self.m.__format__("<15i+")
 
-    def repr(self) -> None:
+    def repr(self) -> str:
         "it prints the repr of the MultyPolinomial"
 
         return self.m.__repr__()
 
-    def infos(self) -> None:
-        "it prints all the values separately"
+    def infos(self) -> tuple[str,str,str]:
+        "it prints all the values separately (by calling all)"
 
         return map(str, self.m.all)
 
@@ -98,3 +98,7 @@ class shower:
         print(self._border_rect(length))
         print(self._close_rect(length))
         print("\n")
+
+if __name__ == "__main__":
+    from creator import m_random
+    shower(m_random)

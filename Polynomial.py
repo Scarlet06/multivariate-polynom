@@ -1564,7 +1564,7 @@ class MultyPolinomial:
                 if power in tt:
                     tt[power][1] += coef[1]
                 else:
-                    tt[power] = coef
+                    tt[power] = coef[:]
 
             return self.__class__(t,unkn,tt)
 
@@ -1603,7 +1603,7 @@ class MultyPolinomial:
                 if power in tt:
                     tt[power][1] += coef[1]
                 else:
-                    tt[power] = coef
+                    tt[power] = coef[:]
 
             return self.__class__(t,unkn,tt)
 
@@ -1642,7 +1642,7 @@ class MultyPolinomial:
                 if power in tt:
                     tt[power][1] += coef[1]
                 else:
-                    tt[power] = coef
+                    tt[power] = coef[:]
 
             self._pcoef.clear()
             self._pcoef.update(t)
@@ -1685,7 +1685,7 @@ class MultyPolinomial:
                 if power in tt:
                     tt[power][1] -= coef[1]
                 else:
-                    tt[power] = -coef
+                    tt[power] = [coef[0],-coef[1]]
 
             return self.__class__(t,unkn,tt)
 
@@ -1722,9 +1722,9 @@ class MultyPolinomial:
                 power = lam(power.split("-"),__o._unkn)
 
                 if power in tt:
-                    tt[power][1] += coef[1]
+                    tt[power][1] -= coef[1]
                 else:
-                    tt[power] = coef
+                    tt[power] = [coef[0],-coef[1]]
 
             return self.__class__(t,unkn,tt)
 
@@ -1763,7 +1763,7 @@ class MultyPolinomial:
                 if power in tt:
                     tt[power][1] -= coef[1]
                 else:
-                    tt[power] = -coef
+                    tt[power] = [coef[0],-coef[1]]
 
             self._pcoef.clear()
             self._pcoef.update(t)

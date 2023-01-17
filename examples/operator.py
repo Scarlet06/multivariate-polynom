@@ -137,7 +137,7 @@ class operator:
         "q,r = m1.divmod(m1,m2)\n(m2*q) + r ~= m1"
 
         q,r = self.divmod()
-        return f"q={q}\tr={r}",self.m1.almost_equal(self.m2*q+r)
+        return f"q={q}\tr={r}",self.m1.round_equal(self.m2*q+r)
 
     def beautiful_print(self) -> None:
         "It sets everything to have a beautiful rectangular shape print"

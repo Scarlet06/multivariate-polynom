@@ -429,44 +429,37 @@ class MultyPolinomial:
 
         return s.lstrip("+")
 
-    def __format__(self, _format_spec: str) -> str:
+    def __format__(self, __format_spec: str) -> str:
         """
-        It formats the coef with the given _format_spec.
-        If 'i' is given, it wil return a string as __str__ but without the Integrals
+        The __format_spec can format individually the polynomial coef individually and the whole polynomial object,
+        it is olso possible to format it without the integration parts. To get this, the formatting moda has to follow this:
+
+        '[integrals][numbers][!!monomials][;;[polinomial]]'
+        - integrals, if 'i' is given, integrals will be ignored. other formatting modes will be given to numbers
+        - numbers, are the formatting spec for the numbers, following the standard formatting for numbers
+        - monomials, are the formatting spec for the monomials as string
+        - MultyPolinomial, are the formatting spec for the MultyPolinomials as string 
         """
 
-        if not _format_spec:
-            _format_spec="+.2f"
-
-        breaker = False
-        if 'i' in  _format_spec:
+        if __format_spec.startswith("i"):
+            numbers = __format_spec[1:]
             breaker = True
-            _format_spec = "".join(_format_spec.split('i'))
+        else:
+            numbers = __format_spec
+            breaker = False
+        polynomial=monomials=""
 
-        positioning=""
-        for c in ('^','<','>'):
-            if c in _format_spec:
-                t = _format_spec.split(c)
-                if t[0]:
-                    positioning+=t[0][-1]
-                    t[0] = t[0][:-1]
-                positioning+=c
-                for i,cc in enumerate(t[1]):
-                    if cc.isnumeric():
-                        positioning+=cc
-                        continue
-                    break
-                else:
-                    i+=1
-                t[1]=t[1][i:]
-                _format_spec = "".join(t)
-                del t
-
-        if not _format_spec:
-            _format_spec="+"
-
-        s = ""
+        if "!!" in numbers:
+            numbers,monomials = numbers.split("!!")
+        
+        if ";;" in numbers:
+            numbers,polynomial = numbers.split(";;")
+        elif ";;" in monomials:
+            monomials,polynomial = monomials.split(";;")
+        
         h = ("+","-")
+        s = ""
+        ks = ""
         
         for power in sorted(self._pcoef.keys(),reverse=True):
             coef = self._pcoef[power]
@@ -474,7 +467,7 @@ class MultyPolinomial:
             if not coef:
                 continue
 
-            k=f"{coef:{_format_spec}}"
+            ks = f"{coef:{numbers}}"
 
             t = tuple(map(int,power.split("-")))
 
@@ -485,26 +478,20 @@ class MultyPolinomial:
                     if not i:
                         continue
 
-                    if not k.endswith(h):
-                        k+=f"*{p}"
+                    if ks.endswith(h):
+                        ks+=f"{p}"
                     else:
-                        k+=f"{p}"
+                        ks+=f"*{p}"
 
                     if i>=2:
-                        k+=f"^{i}"
-            
-            if positioning:
-                s+=f'{"+"*(not k.startswith(h))}{k:{positioning}}'
-            else:
-                s+=f'{"+"*(not k.startswith(h))}{k}'
-
+                        ks+=f"^{i}"
+            ks= f'{ks:{monomials}}'
+            s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
         if breaker:
             if not s:
-                s =f"{0:{_format_spec}}"
-                if positioning:
-                    s = f"{s:{positioning}}"
-            return s
+                return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}""".strip("+")
+            return f"{s:{polynomial}}".strip("+")
 
         for power in sorted(self._icoef.keys(),reverse=True):
             coef = self._icoef[power]
@@ -512,7 +499,7 @@ class MultyPolinomial:
             if not coef[1]:
                 continue
 
-            k=f"{coef[1]:{_format_spec}}*{coef[0]}"
+            ks = f"{coef[1]:{numbers}}*{coef[0]}"
 
             t = tuple(map(int,power.split("-")))
 
@@ -523,22 +510,17 @@ class MultyPolinomial:
                     if not i:
                         continue
                     
-                    k+=f"*{p}"
+                    ks+=f"*{p}"
 
                     if i>=2:
-                        k+=f"^{i}"
-            
-            if positioning:
-                s+=f'{"+"*(not k.startswith(h))}{k:{positioning}}'
-            else:
-                s+=f'{"+"*(not k.startswith(h))}{k}'
+                        ks+=f"^{i}"
+                    
+            ks= f'{ks:{monomials}}'
+            s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
         if not s:
-            s =f"{0:{_format_spec}}"
-            if positioning:
-                s = f"{s:{positioning}}"
-
-        return s
+            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}""".strip("+")
+        return f"{s:{polynomial}}".strip("+")
 
     def has_integrals_const(self) -> bool:
         """
@@ -2330,6 +2312,7 @@ class MultyPolinomial:
             return self
         raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
 
+    
 
 if __name__ == '__main__':
     print(MultyPolinomial.fromText("-x-x*y^2","y"))

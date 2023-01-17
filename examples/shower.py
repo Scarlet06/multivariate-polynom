@@ -39,11 +39,6 @@ class shower:
 
         if print_all:
             self.beautiful_print()
-            # self.repr()
-            # self.print()
-            # self.format()
-            # self.infos()
-            # print("\n")
 
     def string(self) -> str:
         "it prints the MultyPolinomial"
@@ -53,8 +48,8 @@ class shower:
     def format(self) -> str:
         "it prints the MultyPolinomial formatted"
 
-        return self.m.__format__("<15i+")
-
+        return self.m.__format__("i<+5,.2f!!^20;;_^100")
+        
     def repr(self) -> str:
         "it prints the repr of the MultyPolinomial"
 
@@ -100,5 +95,5 @@ class shower:
         print("\n")
 
 if __name__ == "__main__":
-    from creator import m_random
-    shower(m_random)
+    from creator import m_random_dict
+    shower(MultyPolinomial.random(12,'x','y'))

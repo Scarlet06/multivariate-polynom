@@ -95,5 +95,4 @@ class shower:
         print("\n")
 
 if __name__ == "__main__":
-    from creator import m_random_dict
     shower(MultyPolinomial.random(12,'x','y'))

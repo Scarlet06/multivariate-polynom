@@ -8,9 +8,11 @@ Number = int|float
 Powers = dict[str,Number]
 Unknowns = tuple[str,...]
 Integrals = dict[str,list[str|Number]]
-class LenghtError(Exception): ...
+class LenghtError(Exception):
+    "The length of a given object doesn't match with the given one"
 
 class MultyPolinomial:
+    "This object is used to create and match the needs for a multivariative polinomial"
 
     #the only variables used by the object
     __slots__ = ('_unkn','_pcoef','_icoef')
@@ -26,14 +28,14 @@ class MultyPolinomial:
             raise TypeError("'unknown' has to be a tuple which contains only strings")
 
         if type(powers_coefficients) is not Powers.__origin__ :
-            raise TypeError("'powers_coefficients' can only be a dict")
+            raise TypeError("'powers_coefficients' has to be a dict")
 
         if type(integrals_coefficients) is not Integrals.__origin__ :
-            raise TypeError("'integrals_coefficients' can only be a dict")
+            raise TypeError("'integrals_coefficients' has to be a dict")
 
         p = len(unknown)
-        if integrals_coefficients and p and any(len(q.split("-"))!=p for q in powers_coefficients|integrals_coefficients):
-            raise KeyError("All the key string used in both 'powers_coefficients' and 'integrals_coefficients' have to be len(unknown)*2-1")
+        if any(not q or len(q.split("-"))!=p for q in powers_coefficients|integrals_coefficients):
+            raise LenghtError("All the key string used in both 'powers_coefficients' and 'integrals_coefficients' have to be len(unknown)*2-1")
 
         return super().__new__(cls)
 
@@ -172,7 +174,7 @@ class MultyPolinomial:
         if integrals_coefficients:
             l = len(unknown)
             if any((len(ic.split("-"))!=l for ic in integrals_coefficients)):
-                raise ValueError("all keys in 'integrals_coefficients' have to be len('unknown')")
+                raise LenghtError("all keys in 'integrals_coefficients' have to be len('unknown')")
 
         return cls(t,tuple(unknown), integrals_coefficients)
 
@@ -287,7 +289,7 @@ class MultyPolinomial:
     def unknown(self, unknowns:Unknowns) -> None:
         "tuple of the unknown"
         if not isinstance(unknowns, Unknowns.__origin__) or len(unknowns)!=len(self._unkn):
-            raise ValueError("The lenght of the given Unknowns has to be the same as the previous one")
+            raise LenghtError("The lenght of the given Unknowns has to be the same as the previous one")
         self._unkn = unknowns
 
     @property
@@ -299,7 +301,7 @@ class MultyPolinomial:
     def powers(self, powers_coefficients:Powers) -> None:
         "dictionary of the coefficients"
         if not isinstance(powers_coefficients, Powers.__origin__) or any(len(p.split("-"))!=len(self._unkn) for p in powers_coefficients):
-            raise ValueError("The lenght of all the keys inthe given Powers has to be the same as unknown")
+            raise LenghtError("The lenght of all the keys inthe given Powers has to be the same as unknown")
         self._pcoef = powers_coefficients
 
     @property
@@ -311,7 +313,7 @@ class MultyPolinomial:
     def integrals(self, integrals_coefficients:Integrals) -> None:
         "dictionary of the coefficients"
         if not isinstance(integrals_coefficients, Integrals.__origin__) or any(len(p.split("-"))!=len(self._unkn) for p in integrals_coefficients):
-            raise ValueError("The lenght of all the keys inthe given Integrals has to be the same as unknown")
+            raise LenghtError("The lenght of all the keys inthe given Integrals has to be the same as unknown")
         self._icoef = integrals_coefficients
 
     @property
@@ -790,7 +792,7 @@ class MultyPolinomial:
 
         if isinstance(values,dict):
             if any(unk not in values for unk in self._unkn):
-                raise ValueError(f"keys value in values of type dict, have to by the same as {self._unkn}")
+                raise KeyError(f"keys value in values of type dict, have to by the same as {self._unkn}")
 
             if __ignore:
                 for unk,val in values.items():
@@ -1650,6 +1652,12 @@ class MultyPolinomial:
 
 
     ## OPERATION WITH MULTIVARIATIVE POLYNOMIALS ##
+    @staticmethod
+    def _check__is_Number(__o:Any, error:str="{}"):
+        "This function raises a TypeError if the given __o is not a Number"
+        if not isinstance(__o, Number):
+            raise TypeError(error.format(type(__o)))
+
     def __add__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
@@ -1676,8 +1684,7 @@ class MultyPolinomial:
 
             return self.__class__(t,unkn,tt)
 
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be added to <{type(__o)}>")
+        self._check__is_Number(__o,"{} cannot added to a MultyPolinomial")
 
         t = self._pcoef.copy()
         power = self._get_key_0(len(self._unkn))
@@ -1691,6 +1698,7 @@ class MultyPolinomial:
     
     def __radd__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
+
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1715,9 +1723,8 @@ class MultyPolinomial:
 
             return self.__class__(t,unkn,tt)
 
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be added to <{type(__o)}>")
-
+        self._check__is_Number(__o,"{} cannot added to a MultyPolinomial")
+        
         t = self._pcoef.copy()
         power = self._get_key_0(len(self._unkn))
         if power in t:
@@ -1730,6 +1737,7 @@ class MultyPolinomial:
     
     def __iadd__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
+
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1760,8 +1768,7 @@ class MultyPolinomial:
 
             return self
 
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be added to <{type(__o)}>")
+        self._check__is_Number(__o,"{} cannot added to a MultyPolinomial")
 
         power = self._get_key_0(len(self._unkn))
         if power in self._pcoef:
@@ -1773,6 +1780,7 @@ class MultyPolinomial:
 
     def __sub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
+
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1796,10 +1804,9 @@ class MultyPolinomial:
                     tt[power] = [coef[0],-coef[1]]
 
             return self.__class__(t,unkn,tt)
-
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be subtracted by <{type(__o)}>")
         
+        self._check__is_Number(__o,"{} cannot subtract a MultyPolinomial")
+
         t = self._pcoef.copy()
         power = self._get_key_0(len(self._unkn))
         if power in t:
@@ -1812,6 +1819,7 @@ class MultyPolinomial:
     
     def __rsub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "Add this MultyPolinomial to a number or another MultyPolinomial"
+
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1836,8 +1844,7 @@ class MultyPolinomial:
 
             return self.__class__(t,unkn,tt)
 
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be used to subtract <{type(__o)}>")
+        self._check__is_Number(__o,"{} cannot be subtract by a MultyPolinomial")
 
         t = self._pcoef.copy()
         power = self._get_key_0(len(self._unkn))
@@ -1851,6 +1858,7 @@ class MultyPolinomial:
     
     def __isub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
+
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1881,8 +1889,7 @@ class MultyPolinomial:
 
             return self
 
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be subtracted by <{type(__o)}>")
+        self._check__is_Number(__o,"{} cannot subtract a MultyPolinomial")
 
         power = self._get_key_0(len(self._unkn))
         if power in self._pcoef:
@@ -1894,6 +1901,7 @@ class MultyPolinomial:
 
     def __mul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
+        
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -1944,13 +1952,13 @@ class MultyPolinomial:
             tt
             return self.__class__(t,unkn,tt)
         
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be multiplied to <{type(__o)}>")
+        self._check__is_Number(__o,"{} cannot multiply a MultyPolinomial")
 
         return self.__class__( {power:coef*__o for power,coef in self._pcoef.items()},self._unkn,{power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
     def __rmul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
+
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -2001,13 +2009,13 @@ class MultyPolinomial:
 
             return self.__class__(t,unkn,tt)
         
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be multiplied to <{type(__o)}>")
+        self._check__is_Number(__o,"{} cannot multiply a MultyPolinomial")
 
         return self.__class__( {power:coef*__o for power,coef in self._pcoef.items()},self._unkn,{power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
     def __imul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
+
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
@@ -2060,21 +2068,22 @@ class MultyPolinomial:
                 i+=1
 
             return self
-        
-        if not isinstance(__o,Number):
-            raise TypeError(f"MultyPolinomial cannot be multiplied to <{type(__o)}>")
+
+        self._check__is_Number(__o,"{} cannot multiply a MultyPolinomial")
 
         for power in self._pcoef:
             self._pcoef[power]*=__o
 
-        for power in self._icoef:
-            self._icoef[power][1]*=__o
+        for coef in self._icoef.values():
+            coef[1]*=__o
+        
         return self
 
     def __pow__(self,__o:int) -> MultyPolinomial:
         "elevate this MultyPolinomial to the given positive integer power"
+
         if not isinstance(__o,int) or __o<0:
-            raise Exception("The exponential can only be done with Natural values")
+            raise TypeError("MultyPolinomial can only have positive integers powers")
 
         if not __o:
             return self.__class__({self._get_key_0(len(self._unkn)):1},self._unkn)
@@ -2084,10 +2093,16 @@ class MultyPolinomial:
             t*=self
         return t
 
+    def __rpow__(self,__o:Never) -> MultyPolinomial:
+        "elevation of anything by this MultyPolinomimal"
+        
+        raise TypeError(f"{type(__o)} cannot be elevate to the power of a MultyPolinomial")
+
     def __ipow__(self,__o:int) -> MultyPolinomial:
         "elevate this MultyPolinomial to the given positive integer power"
-        if type(__o) != int or __o<0:
-            raise Exception("The exponential can only be done with Natural values")
+        
+        if not isinstance(__o,int) or __o<0:
+            raise TypeError("MultyPolinomial can only have positive integers powers")
 
         if not __o:
             self._pcoef.clear()
@@ -2102,50 +2117,40 @@ class MultyPolinomial:
 
     def __truediv__(self, __o:Number) -> MultyPolinomial:
         "Divide this MultyPolinomial bythe given number"
-        if isinstance(__o,Number):
-            return self.__class__({power:coef/__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]/__o] for power,coef in self._icoef.items()})
-        if isinstance(__o,MultyPolinomial):
-            raise Exception("Division between MultyPolinomial non implemented yet")
-        raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
+        
+        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+            
+        return self.__class__({power:coef/__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]/__o] for power,coef in self._icoef.items()})
 
     def __rtruediv__(self, __o:Never) -> MultyPolinomial:
-        if not self.deg():
-            t = self.__str__()
-            if t[t[0] in ("+","-"):].isnumeric():
-                return __o/float(t)
+        "division of anything by this MultyPolynomial"
 
-        raise Exception(f"Impossible to divide anything with a MultyPolinomial if it is not a number")
+        raise TypeError(f"{type(__o)} cannot be divided by MultyPolinomial")
 
     def __itruediv__(self, __o:Number) -> MultyPolinomial:
         "Divide this MultyPolinomial bythe given number"
-        if isinstance(__o,Number):
+        
+        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
             
-            for power in self._pcoef:
-                self._pcoef[power]/=__o
-            for power in self._icoef:
-                self._icoef[power][1]/=__o
+        for power in self._pcoef:
+            self._pcoef[power]/=__o
+        for power in self._icoef:
+            self._icoef[power][1]/=__o
 
-            return self
-
-        if isinstance(__o,MultyPolinomial):
-            raise Exception("Division between MultyPolinomial non implemented yet")
-
-        raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
+        return self
 
     def divmod(self, __o:Number|MultyPolinomial) -> tuple[MultyPolinomial,MultyPolinomial]:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the factor and the rest
+        This method returns the quotient and the rest
         """
+
         if not __o:
-            raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
+            raise ZeroDivisionError("Cannot divide by 0")
 
-        if isinstance(__o,Number):
-            return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()}),self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
-
-        if isinstance(__o,MultyPolinomial):
+        if isinstance(__o, MultyPolinomial):
             if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self.zeroMulty(),self.copy()
+                return self.zeroMulty(*__o._unkn),self.copy()
 
             #this function let reorder the powers
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
@@ -2195,23 +2200,23 @@ class MultyPolinomial:
                 p+=s
 
             return p,_self
+        
+        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
 
-        raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
+        return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()}),self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
 
     def __floordiv__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the factor
+        This method returns the quotient
         """
-        if not __o:
-            raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
 
-        if isinstance(__o,Number):
-            return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()})
-        
-        if isinstance(__o,MultyPolinomial):
+        if not __o:
+            raise ZeroDivisionError("Cannot divide by 0")
+
+        if isinstance(__o, MultyPolinomial):
             if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self.zeroMulty()
+                return self.zeroMulty(*__o._unkn)
 
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
             
@@ -2261,27 +2266,27 @@ class MultyPolinomial:
 
             return p
 
-        raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
+        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+
+        return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()})
+
+    def __rfloordiv__(self,__o:Never) -> MultyPolinomial:
+        "the quotient of an Euclidean division"
+
+        raise TypeError(f"{type(__o)} cannot by divide by MultyPolinomial")
 
     def __ifloordiv__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the factor
+        This method returns the quotient
         """
+
         if not __o:
-            raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
+            raise ZeroDivisionError("Cannot divide by 0")
 
-        if isinstance(__o,Number):
-            for power in self._pcoef:
-                self._pcoef[power]//=__o
-            for power in self._icoef:
-                self._icoef[power][1]//=__o
-
-            return self
-        
-        if isinstance(__o,MultyPolinomial):
+        if isinstance(__o, MultyPolinomial):
             if any(_ou not in self._unkn for _ou in __o._unkn):
-                self.update(self.zeroMulty(*self._unkn))
+                self.clear()
                 return self
 
             #this function let reorder the powers
@@ -2332,20 +2337,26 @@ class MultyPolinomial:
                 self+=s
 
             return self
-        raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
+
+        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+
+        for power in self._pcoef:
+            self._pcoef[power]//=__o
+        for power in self._icoef:
+            self._icoef[power][1]//=__o
+
+        return self
 
     def __mod__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the rest
         """
+
         if not __o:
-            raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
+            raise ZeroDivisionError("Cannot divide by 0")
         
-        if isinstance(__o,Number):
-            return self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
-        
-        if isinstance(__o,MultyPolinomial):
+        if isinstance(__o, MultyPolinomial):
             if any(_ou not in self._unkn for _ou in __o._unkn):
                 return self.copy()
 
@@ -2390,27 +2401,26 @@ class MultyPolinomial:
                 _self -= _otemp*self.__class__({power:coef}, self._unkn)
 
             return _self
+
+        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
         
-        raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
+        return self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
+        
+    def __rmod__(self,__o:Never) -> MultyPolinomial:
+        "the rest of an Euclidean division"
+        
+        raise TypeError(f"{type(__o)} cannot by divide by MultyPolinomial")
 
     def __imod__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
         """
-        Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
+        Euclidean division, or division with remainder between this MultyPolinomial and the given number or MultyPolinomial
         This method returns the rest
         """
 
         if not __o:
-            raise ZeroDivisionError("You were deviding MultyPolinomial by 0")
+            raise ZeroDivisionError("Cannot divide by 0")
 
-        if isinstance(__o,Number):
-            for power in self._pcoef:
-                self._pcoef[power]%=__o
-            for power in self._icoef:
-                self._icoef[power][1]%=__o
-
-            return self
-
-        if isinstance(__o,MultyPolinomial):
+        if isinstance(__o, MultyPolinomial):
             if any(_ou not in self._unkn for _ou in __o._unkn):
                 return self
 
@@ -2452,9 +2462,17 @@ class MultyPolinomial:
                 self -= _otemp*self.__class__({power:coef}, self._unkn)
 
             return self
-        raise Exception(f"Impossible to divide a MultyPolinomial with a {type(__o)}")
+
+        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+
+        for power in self._pcoef:
+            self._pcoef[power]%=__o
+        for coef in self._icoef.values():
+            coef[1]%=__o
+
+        return self
 
 
 
 if __name__ == '__main__':
-    print(MultyPolinomial.fromText("-x-x*y^2","y"))
+    print(MultyPolinomial.fromText("-x-x*y^2","y")*2)

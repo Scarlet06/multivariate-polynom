@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # the sys.path.
     sys.path.append(parent)
 
-from Polynomial import MultyPolinomial,Self,overload,Number
+from MultyPolynomial import MultyPolinomial,Self,overload,Number
 from collections.abc import Callable
 
 class operator:

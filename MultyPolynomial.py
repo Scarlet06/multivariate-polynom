@@ -37,6 +37,10 @@ class MultyPolinomial:
         if any(not q or len(q.split("-"))!=p for q in powers_coefficients|integrals_coefficients):
             raise LenghtError("All the key string used in both 'powers_coefficients' and 'integrals_coefficients' have to be len(unknown)*2-1")
 
+        for coef in powers_coefficients.values():
+            cls._check__is_Number(coef,"Every coef has to be a Number")
+        for coef in integrals_coefficients.values():
+            cls._check__is_Number(coef[1],"Every coef has to be a Number")
         return super().__new__(cls)
 
     @overload
@@ -74,6 +78,7 @@ class MultyPolinomial:
         """
         Given another MultyPolinomial it creates a new MultyPolinomial with the same informations
         """
+        
         return cls(m._pcoef.copy(),m._unkn,{p:c.copy() for p,c in m._icoef.items()})
 
     @overload

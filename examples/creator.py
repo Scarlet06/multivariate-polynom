@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # the sys.path.
     sys.path.append(parent)
 
-from Polynomial import MultyPolinomial
+from MultyPolynomial import MultyPolinomial
 
 # that's just to know which unknowns does they have when imported
 class Multy_X(MultyPolinomial): "This class is used only for suggest which unknown the MultyPolinomial should have"

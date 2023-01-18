@@ -1,1 +1,1 @@
-from Polynomial import MultyPolinomial
+from MultyPolynomial import MultyPolinomial

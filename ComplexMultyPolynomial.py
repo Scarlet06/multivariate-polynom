@@ -1,5 +1,5 @@
 from __future__ import annotations
-from MultyPolynomial import MultyPolinomial, Iterable, Generator, LenghtError, Self, Any, Never, overload, floor, ceil, prod, randint
+from MultyPolynomial import MultyPolinomial, LenghtError, Self, Any, Never, overload, floor, ceil
 import re 
 
 Number = int|float|complex
@@ -57,13 +57,16 @@ class ComplexMultyPolynomial(MultyPolinomial):
         unknown = list(unknown)
         t = {}
 
-        pattern = r'(\(([+-]?\d+(\.\d+)?)?([+-]?(\d+)?(\.\d+)?j)?\))'
+        pattern = r'(\((([+-]?\d+(\.\d+)?)?|([+-]?(\d+)?(\.\d+)?j)?)+\))'
         match = re.finditer(pattern, text)
         replacer = "{}"
         complexes = []
         for m in match:
             text = text.replace(m[0],replacer)
-            complexes.append(complex(m[0]))
+            try:
+                complexes.append(complex(m[0]))
+            except:
+                complexes.append(complex(eval(m[0])))
         
         text = text.replace("-","+-")
         if text.startswith("+"):
@@ -418,22 +421,22 @@ class ComplexMultyPolynomial(MultyPolinomial):
     def divmod(self, __o:Never) -> None:
         "Doesn't work here"
 
-        raise TypeError("complex floor-divide module nor be floor-divided")
+        raise TypeError("complex cannot be moduled nor floor-divided")
 
     def __floordiv__(self, __o:Never) -> None:
         "Doesn't work here"
 
-        raise TypeError("complex floor-divide module nor be floor-divided")
+        raise TypeError("complex cannot floor-divide nor be floor-divided")
 
     def __rfloordiv__(self,__o:Never) -> None:
         "Doesn't work here"
 
-        raise TypeError("complex floor-divide module nor be floor-divided")
+        raise TypeError("complex cannot floor-divide nor be floor-divided")
 
     def __ifloordiv__(self, __o:Never) -> None:
         "Doesn't work here"
 
-        raise TypeError("complex floor-divide module nor be floor-divided")
+        raise TypeError("complex cannot floor-divide nor be floor-divided")
 
     def __mod__(self, __o:Never) -> None:
         "Doesn't work here"
@@ -455,3 +458,4 @@ if __name__ == '__main__':
     c:ComplexMultyPolynomial = ComplexMultyPolynomial.fromText("(j)",("x"))
     j:ComplexMultyPolynomial = ComplexMultyPolynomial.random(3,"x")
     print(3*(c*2+j)==(2*c- (-j))*3)
+    

@@ -60,7 +60,7 @@ class applicator:
         "this evaluates the MultyPolinomial in the median point in the first unknown"
 
         r = self.m.evaluate([self.c]*len(self.m))
-        s = MultyPolinomial.fromText(str(self.m([self.c]*len(self.m),True)),self.m.unknown)
+        s = self.m.fromText(str(self.m([self.c]*len(self.m),True)),self.m.unknown)
 
         t = self.m.copy()
         t.evaluate_ip([self.c]*len(self.m))
@@ -135,6 +135,6 @@ class applicator:
         print(f"{chr(9504)}{chr(9472)}{'n integral [a,b]:':<20}{self.n_integralAB()}")
 
 if __name__ == "__main__":
-    from creator import m_random_unkn
+    from creator_MP import m_random_unkn
     applicator(m_random_unkn, 2, 5)
     

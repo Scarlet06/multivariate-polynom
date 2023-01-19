@@ -430,7 +430,7 @@ class MultyPolinomial:
         rapresentation of the MultyPolinomial
         """
         
-        return f"MultyPolinomial{self.all}"
+        return f"{self.__class__.__name__}{self.all}"
 
     def __str__(self) -> str:
         """
@@ -1485,10 +1485,13 @@ class MultyPolinomial:
             return self.__class__(_pcoef,self._unkn,self._icoef)
         
         unkn = tuple(unknown for i,unknown in enumerate(self._unkn) if t[i])
-        if not unkn:
-            unkn = self._unkn[0]
-        pcoef = {"-".join(p for i,p in enumerate(power.split("-"))if t[i]):coef for power,coef in _pcoef.items()}
-        icoef = {"-".join(p for i,p in enumerate(power.split("-"))if t[i]):coef for power,coef in _icoef.items()}
+        if unkn:
+            pcoef = {"-".join(p for i,p in enumerate(power.split("-")) if t[i]):coef for power,coef in _pcoef.items()}
+            icoef = {"-".join(p for i,p in enumerate(power.split("-")) if t[i]):coef for power,coef in _icoef.items()}
+        else:
+            unkn = (self._unkn[0],)
+            pcoef = {"0":coef for power,coef in _pcoef.items()}
+            icoef = {"0":coef.copy() for power,coef in _icoef.items()}
 
         return self.__class__(pcoef,unkn,icoef)
 

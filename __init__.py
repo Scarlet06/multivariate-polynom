@@ -1,1 +1,2 @@
 from MultyPolynomial import MultyPolinomial
+from ComplexMultyPolynomial import ComplexMultyPolynomial

@@ -154,8 +154,12 @@ class operator:
         if not func:
             return "# "
         s='\n'
-        t = func()
-        return f"# {t[0]}\n# {func.__doc__.replace(s,f'{s}# ')}:\t{t[1]}"
+        try:
+            t = func()
+            return f"# {t[0]}\n# {func.__doc__.replace(s,f'{s}# ')}:\t{t[1]}"
+        except Exception as e:
+            return f"% {func.__name__}:\t{e}"
+
 
     def _print_rect(self, *what:Callable[[],str]) -> None:
         "It prints the actual rect"

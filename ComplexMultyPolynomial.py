@@ -142,34 +142,20 @@ class ComplexMultyPolynomial(MultyPolinomial):
 
 
     ## SOME INTERESTING METHODS ##
-    def is_real(self) -> bool:
+    def is_MultyPolynomial(self) -> bool:
         "It returns True if it is a real polynomial"
-        return not (any(isinstance(coef,complex) for coef in self._pcoef.values()) or any(isinstance(coef[1],complex) for coef in self._pcoef.values()))
+        return not (any(isinstance(coef,complex) and coef.imag for coef in self._pcoef.values()) or any(isinstance(coef[1],complex) and coef[1].imag for coef in self._pcoef.values()))
         
     def toMulty(self) -> MultyPolinomial:
         "It convert this complex multivariative polynomial into a real one"
         return MultyPolinomial({power:coef if not isinstance(coef,complex) else coef.real for power,coef in self._pcoef.items()},self._unkn,{power:coef[1] if not isinstance(coef,complex) else coef[1].real for power,coef in self._icoef.items()})
     
-    def is_a_float_number(self) -> bool:
-        """
-        Retruns True if and only if there is not integration's constants and all the coef which degree is greater than 0 are 0 and the other is int
-        """
-
-        return self.is_a_number() and isinstance(self._pcoef[self._get_key_0(len(self._unkn))],float)
-
-    def is_a_int_number(self) -> bool:
-        """
-        Retruns True if and only if there is not integration's constants and all the coef which degree is greater than 0 are 0 and the other is float
-        """
-
-        return self.is_a_number() and isinstance(self._pcoef[self._get_key_0(len(self._unkn))],int)
-
     def is_a_complex_number(self) -> bool:
         """
         Retruns True if and only if there is not integration's constants and all the coef which degree is greater than 0 are 0 and the other is complex
         """
 
-        return self.is_a_number() and isinstance(self._pcoef[self._get_key_0(len(self._unkn))],complex)
+        return self.is_a_number() and isinstance(self._pcoef.get(self._get_key_0(len(self._unkn)),0),complex)
 
     def __complex__(self) -> complex:
         "returns the 0 degree coef as complex"
@@ -455,7 +441,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
 
 
 if __name__ == '__main__':
-    c:ComplexMultyPolynomial = ComplexMultyPolynomial.fromText("(j)",("x"))
-    j:ComplexMultyPolynomial = ComplexMultyPolynomial.random(3,"x")
+    c = ComplexMultyPolynomial.fromText("(j)",("x",))
+    j = ComplexMultyPolynomial.random(3,"x")
     print(3*(c*2+j)==(2*c- (-j))*3)
     

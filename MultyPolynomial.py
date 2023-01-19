@@ -342,6 +342,20 @@ class MultyPolinomial:
         t=self._get_key_0(len(self._unkn))
         return not (any(coef for power,coef in self._icoef.items() if power!=t) or any(coef[1] for coef in self._icoef.values()))
 
+    def is_a_int_number(self) -> bool:
+        """
+        Retruns True if and only if there is not integration's constants and all the coef which degree is greater than 0 are 0 and the other is float
+        """
+
+        return self.is_a_number() and isinstance(self._pcoef.get(self._get_key_0(len(self._unkn)),0),int)
+
+    def is_a_float_number(self) -> bool:
+        """
+        Retruns True if and only if there is not integration's constants and all the coef which degree is greater than 0 are 0 and the other is float
+        """
+
+        return self.is_a_number() and isinstance(self._pcoef.get(self._get_key_0(len(self._unkn)),0),float)
+
     def __int__(self) -> int:
         "returns the 0 degree coef as int"
 

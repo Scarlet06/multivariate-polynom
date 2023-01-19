@@ -3,6 +3,7 @@ from collections.abc import Iterable, Generator
 from typing import Self, Any, Never, overload
 from math import floor, ceil, prod
 from random import randint
+from re import match,findall
 
 Number = int|float
 Powers = dict[str,Number]
@@ -17,15 +18,17 @@ class MultyPolinomial:
     #the only variables used by the object
     __slots__ = ('_unkn','_pcoef','_icoef')
 
-
     ## SOME INITIALIZATION && CLASSMETHODS ##
-    def __new__(cls:type[Self], powers_coefficients:Powers, unknown:Unknowns, integrals_coefficients:Integrals={}) -> Self:
+    def __new(self, powers_coefficients:Powers, unknown:Unknowns, integrals_coefficients:Integrals) -> None:
         """
-        Before creating the object, it checks that every argument is given in the right format
+        It checks that every argument is given in the right format
         """
 
         if type(unknown) is not Unknowns.__origin__ :
             raise TypeError("'unknown' has to be a tuple which contains only strings")
+
+        if any(len(char)!=1 for char in unknown):
+            raise LenghtError("All the unknowns in unknown have to be lenght 1")
 
         if type(powers_coefficients) is not Powers.__origin__ :
             raise TypeError("'powers_coefficients' has to be a dict")
@@ -35,13 +38,12 @@ class MultyPolinomial:
 
         p = len(unknown)
         if any(not q or len(q.split("-"))!=p for q in powers_coefficients|integrals_coefficients):
-            raise LenghtError("All the key string used in both 'powers_coefficients' and 'integrals_coefficients' have to be len(unknown)*2-1")
+            raise LenghtError("All the key string used in both 'powers_coefficients' and 'integrals_coefficients' have contains len(unknown) numbers positions")
 
         for coef in powers_coefficients.values():
-            cls._check__is_Number(coef,"Every coef has to be a Number")
+            self._check__is_Number(coef,"Every coef has to be a Number")
         for coef in integrals_coefficients.values():
-            cls._check__is_Number(coef[1],"Every coef has to be a Number")
-        return super().__new__(cls)
+            self._check__is_Number(coef[1],"Every coef has to be a Number")
 
     @overload
     def __init__(self, powers_coefficients:Powers, unknown:Unknowns) -> None:
@@ -67,6 +69,7 @@ class MultyPolinomial:
         """
     
     def __init__(self, powers_coefficients:Powers, unknown:Unknowns, integrals_coefficients:Integrals={}) -> None:
+        self.__new(powers_coefficients,unknown,integrals_coefficients)
         
         self._unkn:Unknowns = tuple(sorted(unknown))
         lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] for unk in self._unkn)
@@ -74,7 +77,7 @@ class MultyPolinomial:
         self._icoef:Integrals = {lam(power.split("-"),unknown):coef for power,coef in integrals_coefficients.items()}
 
     @classmethod
-    def fromMulty(cls: type[Self], m:MultyPolinomial) -> MultyPolinomial:
+    def fromMulty(cls: type[Self], m:MultyPolinomial) -> Self:
         """
         Given another MultyPolinomial it creates a new MultyPolinomial with the same informations
         """
@@ -83,7 +86,7 @@ class MultyPolinomial:
 
     @overload
     @classmethod
-    def fromText(cls: type[Self], text:str) -> MultyPolinomial:
+    def fromText(cls: type[Self], text:str) -> Self:
         """
         Given a string of text it tries to create the polinom.
         the string has to be formatted, writing every multiplication *, even between coef and unknown. The exponential has to be written with ^. It doesn't understand parenthesis
@@ -118,6 +121,8 @@ class MultyPolinomial:
     @classmethod
     def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> Self:
 
+        num = r'^[+-]?(?:(?:\d+)?(?:\.)?(?:\d+)?)$'
+
         unknown = list(unknown)
         t = {}
         text = text.replace("-","+-")
@@ -136,36 +141,36 @@ class MultyPolinomial:
                     p=p[1:]
 
                 if "^" in p:
+                    i, val = p.split("^")
 
-                    if p[:p.index("^")].isalpha():
-                        i, val = p.split("^")
-
-                        if i in unknown:
-                            power[unknown.index(i)]+=f"+{val}"
-                            continue
-
-                        unknown.append(i)
-                        t = {po+"-0":co for po,co in t.items()}
-                        power.append('0')
-                        power[unknown.index(i)]+=f"+{val}"
+                    x = match(num,i)
+                    if x:
+                        coef+=f"*({i}**{val})"
                         continue
                         
-                    coef+=f"*({i}**{val})"
-                    continue
-
-                if p.isalpha():
-
-                    if p in unknown:
-                        power[unknown.index(p)]+=f"+{1}"
+                    elif i in unknown:
+                        power[unknown.index(i)]+=f"+{val}"
                         continue
 
-                    unknown.append(p)
+                    unknown.append(i)
                     t = {po+"-0":co for po,co in t.items()}
                     power.append('0')
-                    power[unknown.index(p)]+=f"+{1}"
+                    power[unknown.index(i)]+=f"+{val}"
                     continue
 
-                coef+=f"*{p}"
+                x = match(num,p)
+                if x:
+                    coef+=f"*{p}"
+                    continue
+
+                elif p in unknown:
+                    power[unknown.index(p)]+="+1"
+                    continue
+
+                unknown.append(p)
+                t = {po+"-0":co for po,co in t.items()}
+                power.append('0')
+                power[unknown.index(p)]+="+1"
 
             power = "-".join(map(lambda x: str(eval(x)),power))
             coef = eval(coef)
@@ -180,46 +185,56 @@ class MultyPolinomial:
             l = len(unknown)
             if any((len(ic.split("-"))!=l for ic in integrals_coefficients)):
                 raise LenghtError("all keys in 'integrals_coefficients' have to be len('unknown')")
+        
+        elif not unknown:
+            unknown = ("x",)
+            t = {"0": coef for coef in t.values()}
 
         return cls(t,tuple(unknown), integrals_coefficients)
 
     @overload
     @classmethod
-    def oneMulty(cls: type[Self]) -> Self:
+    def one(cls: type[Self]) -> Self:
         """
         This classmethod creates a MultyPolinomial with only the coef 1
         """
 
     @overload
     @classmethod
-    def oneMulty(cls: type[Self], *unknowns:str) -> Self:
+    def one(cls: type[Self], *unknowns) -> Self:
         """
         This classmethod creates a MultyPolinomial with only the coef 1
-        If unknowns are given, it initializes it with these, else it won't have any
+        If unknowns are given, it initializes it with these
         """
 
     @classmethod
-    def oneMulty(cls: type[Self], *unknowns:str) -> Self:
+    def one(cls: type[Self], *unknowns) -> Self:
+
+        if not unknowns:
+            unknowns = ("x",)
 
         return cls({cls._get_key_0(len(unknowns)):1},unknowns,{})
 
     @overload
     @classmethod
-    def zeroMulty(cls: type[Self]) -> Self:
+    def zero(cls: type[Self]) -> Self:
         """
         This classmethod creates a MultyPolinomial with only the coef 0
         """
 
     @overload
     @classmethod
-    def zeroMulty(cls: type[Self], *unknowns:str) -> Self:
+    def zero(cls: type[Self], *unknowns:str) -> Self:
         """
         This classmethod creates a MultyPolinomial with only the coef 0
         If unknowns are given, it initializes it with these, else it won't have any
         """
 
     @classmethod
-    def zeroMulty(cls: type[Self], *unknowns:str) -> Self:
+    def zero(cls: type[Self], *unknowns:str) -> Self:
+
+        if not unknowns:
+            unknowns = ("x",)
         
         return cls({cls._get_key_0(len(unknowns)):0},unknowns,{})
 
@@ -394,7 +409,7 @@ class MultyPolinomial:
 
         if  __ignore:
             if h:
-                yield self.zeroMulty(*self._unkn)
+                yield self.zero(*self._unkn)
             return
 
         k = {self._get_key_0(len(self._unkn)):0}
@@ -405,7 +420,7 @@ class MultyPolinomial:
             h=False
         
         if h:
-            yield self.zeroMulty(*self._unkn)
+            yield self.zero(*self._unkn)
 
     @overload
     def deg(self) -> int:
@@ -457,10 +472,7 @@ class MultyPolinomial:
         s = ""
         h = ("+","-")
 
-        _ = sorted(self._pcoef.keys(),reverse=True)
-
-        for power in sorted(self._pcoef.keys(),reverse=True):
-            coef = self._pcoef[power]
+        for power,coef in sorted(self._pcoef.items(),key=lambda x:x[0],reverse=True):
 
             if not coef:
                 continue
@@ -494,8 +506,7 @@ class MultyPolinomial:
                 if i>=2:
                     s+=f"^{i}"
                 
-        for power in sorted(self._icoef.keys(),reverse=True):
-            coef = self._icoef[power]
+        for power,coef in sorted(self._icoef.items(),key=lambda x:x[0],reverse=True):
 
             if not coef[1]:
                 continue
@@ -594,8 +605,8 @@ class MultyPolinomial:
 
         if breaker:
             if not s:
-                return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}""".strip("+")
-            return f"{s:{polynomial}}".strip("+")
+                return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+            return f"{s.strip('+'):{polynomial}}"
 
         for power in sorted(self._icoef.keys(),reverse=True):
             coef = self._icoef[power]
@@ -623,8 +634,8 @@ class MultyPolinomial:
             s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
         if not s:
-            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}""".strip("+")
-        return f"{s:{polynomial}}".strip("+")
+            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+        return f"{s.strip('+'):{polynomial}}"
 
     @staticmethod
     def _get_key_0(__len:int = 0) -> str:
@@ -1456,7 +1467,7 @@ class MultyPolinomial:
 
     def clear(self) -> None:
         """
-        It transform itself to zeroMulty
+        It transform itself to zero
         """
         
         self._pcoef.clear()
@@ -1612,7 +1623,7 @@ class MultyPolinomial:
         if args:
             p = self.__class__({self._get_key_0(len(self._unkn)):args[0]},self._unkn)
         else:
-            p = self.__class__.zeroMulty(*self._unkn,)
+            p = self.__class__.zero(*self._unkn,)
         p._icoef = {power:coef.copy() for power,coef in self._icoef.items()}
         
         if kwargs:
@@ -2170,7 +2181,7 @@ class MultyPolinomial:
 
         if isinstance(__o, MultyPolinomial):
             if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self.zeroMulty(*__o._unkn),self.copy()
+                return self.zero(*__o._unkn),self.copy()
 
             #this function let reorder the powers
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
@@ -2190,7 +2201,7 @@ class MultyPolinomial:
             _self = self.copy()
             
             #this will operate as the quotient
-            p=self.zeroMulty(*self._unkn)
+            p=self.zero(*self._unkn)
 
             #that's to evaluate the fraction 
             values = [1]*len(self._unkn)
@@ -2236,7 +2247,7 @@ class MultyPolinomial:
 
         if isinstance(__o, MultyPolinomial):
             if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self.zeroMulty(*__o._unkn)
+                return self.zero(*__o._unkn)
 
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
             
@@ -2255,7 +2266,7 @@ class MultyPolinomial:
             _self = self.copy()
             
             #this will operate as the quotient
-            p=self.zeroMulty(*self._unkn)
+            p=self.zero(*self._unkn)
 
             #that's to evaluate the fraction 
             values = [1]*len(self._unkn)
@@ -2327,7 +2338,7 @@ class MultyPolinomial:
             _self = self.copy()
             
             #it will become the quotient itself
-            self.update(self.zeroMulty(*self._unkn))
+            self.update(self.zero(*self._unkn))
 
             #that's to evaluate the fraction 
             values = [1]*len(self._unkn)
@@ -2493,6 +2504,6 @@ class MultyPolinomial:
         return self
 
 
-
 if __name__ == '__main__':
     print(MultyPolinomial.fromText("-x-x*y^2","y")*2)
+    print(MultyPolinomial.fromText(""))

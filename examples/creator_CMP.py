@@ -23,9 +23,9 @@ class CMulty_XY(ComplexMultyPolynomial): "This class is used only for suggest wh
 class CMulty_XYZ(ComplexMultyPolynomial): "This class is used only for suggest which unknown the ComplexMultyPolynomial should have"
 
 #   -> 0
-cm0 = CMulty_X.zeroMulty("x")
+cm0 = CMulty_X.zero("x")
 #   -> 1
-cm1 = CMulty_XY.oneMulty("x","y")
+cm1 = CMulty_XY.one("x","y")
 
 #   -> (1+2j)*y^3 - 0.3333*x^5*y^2
 cm_dict = CMulty_XY({'0-3':1+2j,'5-2':-1/3}, ('x','y'))

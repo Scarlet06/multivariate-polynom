@@ -1,6 +1,5 @@
 from __future__ import annotations
-from MultyPolynomial import MultyPolinomial, LenghtError, Self, Any, Never, overload, floor, ceil
-import re 
+from MultyPolynomial import MultyPolinomial, LenghtError, Self, Any, Never, overload, floor, ceil, match, findall
 
 Number = int|float|complex
 Powers = dict[str,Number]
@@ -8,12 +7,9 @@ Unknowns = tuple[str,...]
 Integrals = dict[str,list[str|Number]]
 
 class ComplexMultyPolynomial(MultyPolinomial):
+    "This object is used to create and match the needs for a multivariative polinomial with complex coef"
 
     __slots__ = ()
-    
-    @classmethod
-    def fromMulty(cls: type[Self], m:MultyPolinomial) -> Self:
-        return cls(m._pcoef,m._unkn,m._icoef)
 
     @overload
     @classmethod
@@ -54,19 +50,20 @@ class ComplexMultyPolynomial(MultyPolinomial):
 
     @classmethod
     def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> Self:
+        
+        num = r'^[+-]?(?:(?:\d+)?(?:\.)?(?:\d+)?)$'
+
         unknown = list(unknown)
         t = {}
 
-        pattern = r'(\((([+-]?\d+(\.\d+)?)?|([+-]?(\d+)?(\.\d+)?j)?)+\))'
-        match = re.finditer(pattern, text)
         replacer = "{}"
         complexes = []
-        for m in match:
-            text = text.replace(m[0],replacer)
+        for m in findall(r'(\((?:(?:[+-]?\d+(?:\.\d+)?)?|(?:[+-]?(?:\d+)?(?:\.\d+)?j)?)+\))', text):
+            text = text.replace(m,replacer)
             try:
-                complexes.append(complex(m[0]))
+                complexes.append(complex(m))
             except:
-                complexes.append(complex(eval(m[0])))
+                complexes.append(complex(eval(m)))
         
         text = text.replace("-","+-")
         if text.startswith("+"):
@@ -85,44 +82,45 @@ class ComplexMultyPolynomial(MultyPolinomial):
 
                 if "^" in p:
 
-                    if p[:p.index("^")].isalpha():
-                        i, val = p.split("^")
-
-                        if i in unknown:
-                            power[unknown.index(i)]+=f"+{val}"
-                            continue
-
-                        unknown.append(i)
-                        t = {po+"-0":co for po,co in t.items()}
-                        power.append('0')
-                        power[unknown.index(i)]+=f"+{val}"
-                        continue
-
                     if replacer in p:
                         _, val = p.split("^")
                         coef+=f"*({complexes.pop(0)}**{val})"
                         continue
-                    
-                    coef+=f"*({i}**{val})"
-                    continue
 
-                if p.isalpha():
+                    i, val = p.split("^")
 
-                    if p in unknown:
-                        power[unknown.index(p)]+=f"+{1}"
+                    x = match(num,i)
+                    if x:
+                        coef+=f"*({i}**{val})"
+                        continue
+                        
+                    elif i in unknown:
+                        power[unknown.index(i)]+=f"+{val}"
                         continue
 
-                    unknown.append(p)
+                    unknown.append(i)
                     t = {po+"-0":co for po,co in t.items()}
                     power.append('0')
-                    power[unknown.index(p)]+=f"+{1}"
+                    power[unknown.index(i)]+=f"+{val}"
                     continue
-
+                    
                 if replacer in p:
                     coef+=f"*{complexes.pop(0)}"
                     continue
 
-                coef+=f"*{p}"
+                x = match(num,p)
+                if x:
+                    coef+=f"*{p}"
+                    continue
+
+                elif p in unknown:
+                    power[unknown.index(p)]+=f"+{1}"
+                    continue
+
+                unknown.append(p)
+                t = {po+"-0":co for po,co in t.items()}
+                power.append('0')
+                power[unknown.index(p)]+=f"+{1}"
 
             power = "-".join(map(lambda x: str(eval(x)),power))
             coef = eval(coef)
@@ -192,10 +190,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
         
         s = ""
 
-        # _ = sorted(self._pcoef.keys(),reverse=True)
-
         for power,coef in sorted(self._pcoef.items(),key=lambda x:x[0],reverse=True):
-            # coef = self._pcoef[power]
 
             if not coef:
                 continue
@@ -225,8 +220,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
                 if i>=2:
                     s+=f"^{i}"
                 
-        for power in sorted(self._icoef.keys(),reverse=True):
-            coef = self._icoef[power]
+        for power,coef in sorted(self._icoef.items(),key=lambda x:x[0],reverse=True):
 
             if not coef[1]:
                 continue
@@ -328,8 +322,8 @@ class ComplexMultyPolynomial(MultyPolinomial):
 
         if breaker:
             if not s:
-                return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}""".strip("+")
-            return f"{s:{polynomial}}".strip("+")
+                return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+            return f"{s.strip('+'):{polynomial}}"
 
         for power in sorted(self._icoef.keys(),reverse=True):
             coef = self._icoef[power]
@@ -365,8 +359,8 @@ class ComplexMultyPolynomial(MultyPolinomial):
             s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
         if not s:
-            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}""".strip("+")
-        return f"{s:{polynomial}}".strip("+")
+            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+        return f"{s.strip('+'):{polynomial}}"
 
 
     ## TRASNFORMATIONS ##
@@ -444,4 +438,3 @@ if __name__ == '__main__':
     c = ComplexMultyPolynomial.fromText("(j)",("x",))
     j = ComplexMultyPolynomial.random(3,"x")
     print(3*(c*2+j)==(2*c- (-j))*3)
-    

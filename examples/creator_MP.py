@@ -23,9 +23,9 @@ class Multy_XY(MultyPolinomial): "This class is used only for suggest which unkn
 class Multy_XYZ(MultyPolinomial): "This class is used only for suggest which unknown the MultyPolinomial should have"
 
 #   -> 0
-m0 = Multy_X.zeroMulty("x")
+m0 = Multy_X.zero("x")
 #   -> 1
-m1 = Multy_XY.oneMulty("x","y")
+m1 = Multy_XY.one("x","y")
 
 #   -> 4*y^3 - 0.3333*x^5*y^2
 m_dict = Multy_XY({'0-3':4,'5-2':-1/3}, ('x','y'))

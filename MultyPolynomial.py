@@ -1124,7 +1124,7 @@ class MultyPolinomial:
         if not self.deg(unknown):
             if unknown not in self._unkn:
                 return self.__class__({self._get_key_0(len(self._unkn)+1):0},self._unkn+(unknown,))
-            return self.__class__({self._get_key_0(len(self._unkn)+1):0},self._unkn)
+            return self.__class__({self._get_key_0(len(self._unkn)):0},self._unkn)
 
         index = self._unkn.index(unknown)
         t={}

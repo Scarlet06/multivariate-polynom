@@ -92,7 +92,7 @@ class MultyPolinomial:
 
     @overload
     @classmethod
-    def fromText(cls: type[Self], text:str, unknown:Unknowns=()) -> MultyPolinomial:
+    def fromText(cls: type[Self], text:str, unknown:Unknowns=()) -> Self:
         """
         Given a string of text it tries to create the polinom.
         the string has to be formatted, writing every multiplication *, even between coef and unknown. The exponential has to be written with ^. It doesn't understand parenthesis
@@ -103,7 +103,7 @@ class MultyPolinomial:
 
     @overload
     @classmethod
-    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> MultyPolinomial:
+    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> Self:
         """
         Given a string of text it tries to create the polinom.
         the string has to be formatted, writing every multiplication *, even between coef and unknown. The exponential has to be written with ^. It doesn't understand parenthesis
@@ -116,7 +116,7 @@ class MultyPolinomial:
         """
 
     @classmethod
-    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> MultyPolinomial:
+    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> Self:
 
         unknown = list(unknown)
         t = {}
@@ -570,13 +570,11 @@ class MultyPolinomial:
                     if not i:
                         continue
 
-                    if ks.endswith(h):
-                        ks+=f"{p}"
-                    else:
-                        ks+=f"*{p}"
+                    ks+=f"*{p}"
 
                     if i>=2:
                         ks+=f"^{i}"
+
             ks= f'{ks:{monomials}}'
             s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
@@ -595,7 +593,7 @@ class MultyPolinomial:
 
             t = tuple(map(int,power.split("-")))
 
-            if not any(t):
+            if any(t):
 
                 for p,i in zip(self._unkn,t):
                     
@@ -823,24 +821,24 @@ class MultyPolinomial:
         return eval(t.replace("^","**")), k
 
     @overload
-    def evaluate(self, values:Number) -> MultyPolinomial:
+    def evaluate(self, values:Number) -> Self:
         """
         It returns a copy but making a partial evaluatation of this polynomial in the given value replacing the first element in Unknowns
         """
 
     @overload
-    def evaluate(self, values:Iterable[Number]) -> MultyPolinomial:
+    def evaluate(self, values:Iterable[Number]) -> Self:
         """
         It returns a copy but making a partial evaluatation of this polynomial in the given values replacing the value following the order of Unknowns
         """
 
     @overload
-    def evaluate(self, values:dict[str, Number]) -> MultyPolinomial:
+    def evaluate(self, values:dict[str, Number]) -> Self:
         """
         It returns a copy but making a partial evaluatation of this polynomial replacing each given unknown by its given value
         """
 
-    def evaluate(self, values:Number|Iterable[Number]|dict[str, Number]) -> MultyPolinomial:
+    def evaluate(self, values:Number|Iterable[Number]|dict[str, Number]) -> Self:
 
         icoef=self._icoef.copy()
         it={}
@@ -1104,7 +1102,7 @@ class MultyPolinomial:
             self._icoef.update(it)
             it.clear()
 
-    def partial(self, unknown:str) -> MultyPolinomial:
+    def partial(self, unknown:str) -> Self:
         """
         It makes a partial derivation in the given unknown
         """
@@ -1174,24 +1172,24 @@ class MultyPolinomial:
         self._icoef.update(t)
 
     @overload
-    def n_partial(self, *unknown:str) -> MultyPolinomial:
+    def n_partial(self, *unknown:str) -> Self:
         """
         it makes sequentially all the partial derivations in the given unknown
         """
 
     @overload
-    def n_partial(self, **kwargs:int) -> MultyPolinomial:
+    def n_partial(self, **kwargs:int) -> Self:
         """
         it makes sequentially all the partial derivations in the given unknown by the given number
         """
 
     @overload
-    def n_partial(self, *unknown:str, **kwargs:int) -> MultyPolinomial:
+    def n_partial(self, *unknown:str, **kwargs:int) -> Self:
         """
         it makes sequentially all the partial derivations in the given unknown and by given unknown by the given number
         """
 
-    def n_partial(self, *unknown:str, **kwargs:int) -> MultyPolinomial:
+    def n_partial(self, *unknown:str, **kwargs:int) -> Self:
         s = self.copy()
         for unk in unknown:
             s.partial_ip(unk)
@@ -1228,7 +1226,7 @@ class MultyPolinomial:
             for _ in range(tiems):
                 self.partial_ip(unk)
 
-    def integral(self, unknown:str) -> MultyPolinomial:
+    def integral(self, unknown:str) -> Self:
         """
         It integrates the MultyPolinomial in the given unknown
         """
@@ -1293,24 +1291,24 @@ class MultyPolinomial:
         return 
 
     @overload
-    def n_integral(self, *unknown:str) -> MultyPolinomial:
+    def n_integral(self, *unknown:str) -> Self:
         """
         it makes sequentially all the integrations in the given unknown
         """
 
     @overload
-    def n_integral(self, **kwargs:int) -> MultyPolinomial:
+    def n_integral(self, **kwargs:int) -> Self:
         """
         it makes sequentially all the integrations in the given unknown by the given number
         """
 
     @overload
-    def n_integral(self, *unknown:str, **kwargs:int) -> MultyPolinomial:
+    def n_integral(self, *unknown:str, **kwargs:int) -> Self:
         """
         it makes sequentially all the integrations in the given unknown and by given unknown by the given number
         """
 
-    def n_integral(self, *unknown:str, **kwargs:int) -> MultyPolinomial:
+    def n_integral(self, *unknown:str, **kwargs:int) -> Self:
         s = self.copy()
         for unk in unknown:
             s.integral_ip(unk)
@@ -1347,7 +1345,7 @@ class MultyPolinomial:
             for _ in range(times):
                 self.integral_ip(unk)
 
-    def integralAB(self, unknown:str, a:Number, b:Number) -> MultyPolinomial:
+    def integralAB(self, unknown:str, a:Number, b:Number) -> Self:
         """
         It integrates the MultyPolinomial in the given unknown in the [a,b] interval
         """
@@ -1373,7 +1371,7 @@ class MultyPolinomial:
         self.evaluate_ip({unknown:b})
         self-=t.evaluate({unknown:a})
 
-    def n_integralAB(self, **kwargs:tuple[int,int]) -> MultyPolinomial:
+    def n_integralAB(self, **kwargs:tuple[int,int]) -> Self:
         """
         it makes sequentially all the integrations in the given unknown in its respective interval
         """
@@ -1395,21 +1393,21 @@ class MultyPolinomial:
         
 
     ## TRASNFORMATIONS ##
-    def __neg__(self) -> MultyPolinomial:
+    def __neg__(self) -> Self:
         """
         It returns a new MultyPolinomial with every coef negated
         """
         
         return self.__class__({power:-coef for power,coef in self._pcoef.items() if coef}, self._unkn, {power:[coef[0],-coef[1]] for power,coef in self._icoef.items() if coef[1]})
 
-    def __pos__(self) -> MultyPolinomial:
+    def __pos__(self) -> Self:
         """
         It returns a new MultyPolinomial
         """
         
         return self.__class__({power:coef for power,coef in self._pcoef.items() if coef}, self._unkn, {power:coef[:] for power,coef in self._icoef.items() if coef[1]})
 
-    def __abs__(self) -> MultyPolinomial:
+    def __abs__(self) -> Self:
         """
         It returns a new MultyPolinomial with every coef positive. It doesn't change the unknown sign
         """
@@ -1417,27 +1415,27 @@ class MultyPolinomial:
         return self.__class__({power:abs(coef) for power,coef in self._pcoef.items() if coef}, self._unkn, {power:[coef[0],abs(coef[1])] for power,coef in self._icoef.items() if coef})
 
     @overload
-    def __round__(self) -> MultyPolinomial:
+    def __round__(self) -> Self:
         """
         It returns a new MultyPolinomial with each coef rounded to the closer integer
         """
     
     @overload
-    def __round__(self, __n:int|None = None) -> MultyPolinomial:
+    def __round__(self, __n:int|None = None) -> Self:
         """
         It returns a new MultyPolinomial with each coef in the given position
         """
     
-    def __round__(self, __n:int|None = None) -> MultyPolinomial:
+    def __round__(self, __n:int|None = None) -> Self:
 
         return self.__class__({power:round(coef,__n) for power,coef in self._pcoef.items()}, self._unkn, {power:[coef[0],round(coef[1],__n)] for power,coef in self._icoef.items()})
 
-    def __floor__(self) -> MultyPolinomial:
+    def __floor__(self) -> Self:
         "It returns the MultyPolinomial with all the coefs floored"
 
         return self.__class__({power:floor(coef) for power,coef in self._pcoef.items()}, self._unkn, {power:[coef[0],floor(coef[1])] for power,coef in self._icoef.items()})
 
-    def __ceil__(self) -> MultyPolinomial:
+    def __ceil__(self) -> Self:
         "It returns the MultyPolinomial with all the coefs ceiled"
 
         return self.__class__({power:ceil(coef) for power,coef in self._pcoef.items()}, self._unkn, {power:[coef[0],ceil(coef[1])] for power,coef in self._icoef.items()})
@@ -1451,7 +1449,7 @@ class MultyPolinomial:
         self._pcoef[self._get_key_0(len(self._unkn))]=0
         self._icoef.clear()
 
-    def clean(self) -> MultyPolinomial:
+    def clean(self) -> Self:
         """
         It returns a new MultyPolinomial removing any unkown wich isn't used. It skips any zero coef
         """
@@ -1545,7 +1543,7 @@ class MultyPolinomial:
         self._pcoef.update({"-".join(p for i,p in zip(t,power.split("-")) if i):coef for power,coef in pcoef.items()})
         self._icoef.update({"-".join(p for i,p in zip(t,power.split("-")) if i):coef for power,coef in icoef.items()})
 
-    def update(self, __o:MultyPolinomial) -> None:
+    def update(self, __o:Self) -> None:
         """
         given a MultyPolinomial,. it updates this MultyPolinomial with the same information of the given one
         """
@@ -1557,42 +1555,42 @@ class MultyPolinomial:
         self._unkn = __o._unkn
 
     @overload
-    def copy(self) -> MultyPolinomial:
+    def copy(self) -> Self:
         """
         It creates a copy of the current MultyPolinomial
         """
 
     @overload
-    def copy(self, __ignore:bool=False) -> MultyPolinomial:
+    def copy(self, __ignore:bool=False) -> Self:
         """
         It creates a copy of the current MultyPolinomial
         if __ignore is True, the Integrals part will be ignored
         """
 
-    def copy(self, __ignore:bool = False) -> MultyPolinomial:
+    def copy(self, __ignore:bool = False) -> Self:
         if __ignore:
             return self.__class__(self._pcoef.copy(),self._unkn)
 
         return self.__class__(self._pcoef.copy(),self._unkn,self._icoef.copy())
 
     @overload
-    def translate(self, *args:Number) -> MultyPolinomial:
+    def translate(self, *args:Number) -> Self:
         "by giving a number, one and only one, is possible to translate 'vertically' the polymoial"
 
     @overload
-    def translate(self, **kwargs:Number) -> MultyPolinomial:
+    def translate(self, **kwargs:Number) -> Self:
         """
         for each given unknown, it translates the polynomial by the corrispective value.
         """
 
     @overload
-    def translate(self, *args:Number, **kwargs:Number) -> MultyPolinomial:
+    def translate(self, *args:Number, **kwargs:Number) -> Self:
         """
         By giving a number, in args one and only one, is possible to translate 'vertically' the polymoial.
         For each given unknown in kwargs, it translates the polynomial by its corrispective value.
         """
 
-    def translate(self, *args:Number, **kwargs:Number) -> MultyPolinomial:
+    def translate(self, *args:Number, **kwargs:Number) -> Self:
         
         if args:
             p = self.__class__({self._get_key_0(len(self._unkn)):args[0]},self._unkn)
@@ -1642,7 +1640,7 @@ class MultyPolinomial:
             p = self.copy()
             self.clear()
 
-            s = tuple(MultyPolinomial({'1':1,'0':-kwargs.get(unk,0)},(unk,)) for unk in self._unkn)
+            s = tuple(self.__class__({'1':1,'0':-kwargs.get(unk,0)},(unk,)) for unk in self._unkn)
             exp = lambda y,x:x**int(y)
             trans = lambda power: prod(map(exp,power.split('-'),s))
 
@@ -1663,7 +1661,7 @@ class MultyPolinomial:
         if not isinstance(__o, Number):
             raise TypeError(error.format(type(__o)))
 
-    def __add__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __add__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
             unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
@@ -1701,7 +1699,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
-    def __radd__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __radd__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
 
         if isinstance(__o, MultyPolinomial):
@@ -1740,7 +1738,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
-    def __iadd__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __iadd__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
 
         if isinstance(__o, MultyPolinomial):
@@ -1783,7 +1781,7 @@ class MultyPolinomial:
         
         return self
 
-    def __sub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __sub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
         if isinstance(__o, MultyPolinomial):
@@ -1822,7 +1820,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
-    def __rsub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __rsub__(self, __o:Number | Self) -> Self:
         "Add this MultyPolinomial to a number or another MultyPolinomial"
 
         if isinstance(__o, MultyPolinomial):
@@ -1861,7 +1859,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
-    def __isub__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __isub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
         if isinstance(__o, MultyPolinomial):
@@ -1904,7 +1902,7 @@ class MultyPolinomial:
         
         return self
 
-    def __mul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __mul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
         
         if isinstance(__o, MultyPolinomial):
@@ -1961,7 +1959,7 @@ class MultyPolinomial:
 
         return self.__class__( {power:coef*__o for power,coef in self._pcoef.items()},self._unkn,{power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
-    def __rmul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __rmul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
 
         if isinstance(__o, MultyPolinomial):
@@ -2018,7 +2016,7 @@ class MultyPolinomial:
 
         return self.__class__( {power:coef*__o for power,coef in self._pcoef.items()},self._unkn,{power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
-    def __imul__(self, __o:Number | MultyPolinomial) -> MultyPolinomial:
+    def __imul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
 
         if isinstance(__o, MultyPolinomial):
@@ -2084,7 +2082,7 @@ class MultyPolinomial:
         
         return self
 
-    def __pow__(self,__o:int) -> MultyPolinomial:
+    def __pow__(self,__o:int) -> Self:
         "elevate this MultyPolinomial to the given positive integer power"
 
         if not isinstance(__o,int) or __o<0:
@@ -2098,12 +2096,12 @@ class MultyPolinomial:
             t*=self
         return t
 
-    def __rpow__(self,__o:Never) -> MultyPolinomial:
+    def __rpow__(self,__o:Never) -> Self:
         "elevation of anything by this MultyPolinomimal"
         
         raise TypeError(f"{type(__o)} cannot be elevate to the power of a MultyPolinomial")
 
-    def __ipow__(self,__o:int) -> MultyPolinomial:
+    def __ipow__(self,__o:int) -> Self:
         "elevate this MultyPolinomial to the given positive integer power"
         
         if not isinstance(__o,int) or __o<0:
@@ -2120,19 +2118,19 @@ class MultyPolinomial:
             self*=t
         return self
 
-    def __truediv__(self, __o:Number) -> MultyPolinomial:
+    def __truediv__(self, __o:Number) -> Self:
         "Divide this MultyPolinomial bythe given number"
         
         self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
             
         return self.__class__({power:coef/__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]/__o] for power,coef in self._icoef.items()})
 
-    def __rtruediv__(self, __o:Never) -> MultyPolinomial:
+    def __rtruediv__(self, __o:Never) -> Self:
         "division of anything by this MultyPolynomial"
 
         raise TypeError(f"{type(__o)} cannot be divided by MultyPolinomial")
 
-    def __itruediv__(self, __o:Number) -> MultyPolinomial:
+    def __itruediv__(self, __o:Number) -> Self:
         "Divide this MultyPolinomial bythe given number"
         
         self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
@@ -2144,7 +2142,7 @@ class MultyPolinomial:
 
         return self
 
-    def divmod(self, __o:Number|MultyPolinomial) -> tuple[MultyPolinomial,MultyPolinomial]:
+    def divmod(self, __o:Number|Self) -> tuple[Self,Self]:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the quotient and the rest
@@ -2206,11 +2204,11 @@ class MultyPolinomial:
 
             return p,_self
         
-        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+        self._check__is_Number(__o,"{} cannot floor-divide nor module a MultyPolinomial")
 
         return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()}),self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
 
-    def __floordiv__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
+    def __floordiv__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the quotient
@@ -2271,16 +2269,16 @@ class MultyPolinomial:
 
             return p
 
-        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+        self._check__is_Number(__o,"{} cannot floor-divide a MultyPolinomial")
 
         return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()})
 
-    def __rfloordiv__(self,__o:Never) -> MultyPolinomial:
+    def __rfloordiv__(self,__o:Never) -> None:
         "the quotient of an Euclidean division"
 
-        raise TypeError(f"{type(__o)} cannot by divide by MultyPolinomial")
+        raise TypeError(f"{type(__o)} cannot be floor-divided by MultyPolinomial")
 
-    def __ifloordiv__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
+    def __ifloordiv__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the quotient
@@ -2343,7 +2341,7 @@ class MultyPolinomial:
 
             return self
 
-        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+        self._check__is_Number(__o,"{} cannot floor-divide a MultyPolinomial")
 
         for power in self._pcoef:
             self._pcoef[power]//=__o
@@ -2352,7 +2350,7 @@ class MultyPolinomial:
 
         return self
 
-    def __mod__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
+    def __mod__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the rest
@@ -2407,16 +2405,16 @@ class MultyPolinomial:
 
             return _self
 
-        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+        self._check__is_Number(__o,"{} cannot module a MultyPolinomial")
         
         return self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
         
-    def __rmod__(self,__o:Never) -> MultyPolinomial:
+    def __rmod__(self,__o:Never) -> None:
         "the rest of an Euclidean division"
         
-        raise TypeError(f"{type(__o)} cannot by divide by MultyPolinomial")
+        raise TypeError(f"{type(__o)} cannot be moduled by MultyPolinomial")
 
-    def __imod__(self, __o:Number|MultyPolinomial) -> MultyPolinomial:
+    def __imod__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and the given number or MultyPolinomial
         This method returns the rest
@@ -2468,7 +2466,7 @@ class MultyPolinomial:
 
             return self
 
-        self._check__is_Number(__o,"{} cannot divide a MultyPolinomial")
+        self._check__is_Number(__o,"{} cannot module a MultyPolinomial")
 
         for power in self._pcoef:
             self._pcoef[power]%=__o

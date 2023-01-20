@@ -35,7 +35,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
 
     @overload
     @classmethod
-    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> Self:
+    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals|None={}) -> Self:
         """
         Given a string of text it tries to create the polinom.
         the string has to be formatted, writing every multiplication *, even between coef and unknown. The exponential has to be written with ^.
@@ -49,7 +49,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
         """
 
     @classmethod
-    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals={}) -> Self:
+    def fromText(cls: type[Self], text:str, unknown:Unknowns=(), integrals_coefficients:Integrals|None=None) -> Self:
         
         num = r'^[+-]?(?:(?:\d+)?(?:\.)?(?:\d+)?)$'
 
@@ -131,12 +131,18 @@ class ComplexMultyPolynomial(MultyPolinomial):
             
             t[power] = coef
 
+        if not unknown:
+            unknown = ("x",)
+            t = {"0": coef for coef in t.values()}
+
         if integrals_coefficients:
             l = len(unknown)
             if any((len(ic.split("-"))!=l for ic in integrals_coefficients)):
                 raise LenghtError("all keys in 'integrals_coefficients' have to be len('unknown')")
-
-        return cls(t,tuple(unknown), integrals_coefficients)
+            
+            return cls(t,tuple(unknown), integrals_coefficients)
+        
+        return cls(t,tuple(unknown), {})
 
 
     ## SOME INTERESTING METHODS ##
@@ -146,7 +152,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
         
     def toMulty(self) -> MultyPolinomial:
         "It convert this complex multivariative polynomial into a real one"
-        return MultyPolinomial({power:coef if not isinstance(coef,complex) else coef.real for power,coef in self._pcoef.items()},self._unkn,{power:coef[1] if not isinstance(coef,complex) else coef[1].real for power,coef in self._icoef.items()})
+        return MultyPolinomial({power:coef if not isinstance(coef,complex) else coef.real for power,coef in self._pcoef.items()},self._unkn,{power:coef.copy() if not isinstance(coef[1],complex) else [coef[0],coef[1].real] for power,coef in self._icoef.items()})
     
     def is_a_complex_number(self) -> bool:
         """
@@ -261,17 +267,23 @@ class ComplexMultyPolynomial(MultyPolinomial):
         it is olso possible to format it without the integration parts. To get this, the formatting moda has to follow this:
 
         '[integrals][numbers][!!monomials][;;[polinomial]]'
-        - integrals, if 'i' is given, integrals will be ignored. other formatting modes will be given to numbers
+        - integrals, if 'i' is given, integrals will be ignored, wherealse if 'ii' is given, the non integral part wuill be ignored. other formatting modes will be given to numbers
         - numbers, are the formatting spec for the numbers, following the standard formatting for numbers
         - monomials, are the formatting spec for the monomials as string
         - MultyPolinomial, are the formatting spec for the MultyPolinomials as string 
         """
 
-        if __format_spec.startswith("i"):
+        if __format_spec.startswith("ii"):
+            numbers = __format_spec[2:]
+            starter = False
+            breaker = True
+        elif __format_spec.startswith("i"):
             numbers = __format_spec[1:]
+            starter = True
             breaker = True
         else:
             numbers = __format_spec
+            starter = True
             breaker = False
         polynomial=monomials=""
 
@@ -285,47 +297,50 @@ class ComplexMultyPolynomial(MultyPolinomial):
         
         h = ("+","-")
         s = ""
-        ks = ""
         
-        for power in sorted(self._pcoef.keys(),reverse=True):
-            coef = self._pcoef[power]
+        if starter:
+            for power in sorted(self._pcoef.keys(),reverse=True):
+                
+                ks = ""
+                coef = self._pcoef[power]
 
-            if not coef:
-                continue
+                if not coef:
+                    continue
 
-            if isinstance(coef,complex):
-                ks+="+("
-                if coef.real:
-                    ks+=f"{coef.real:{numbers}}"
-                if coef.imag:
-                    ks+=f"{coef.imag:{numbers}}j"
-                ks+=")"
-            else:
-                ks+=f"{coef:{numbers}}"
+                if isinstance(coef,complex):
+                    ks+="+("
+                    if coef.real:
+                        ks+=f"{coef.real:{numbers}}"
+                    if coef.imag:
+                        ks+=f"{coef.imag:{numbers}}j"
+                    ks+=")"
+                else:
+                    ks+=f"{coef:{numbers}}"
 
-            t = tuple(map(int,power.split("-")))
+                t = tuple(map(int,power.split("-")))
 
-            if any(t):
+                if any(t):
 
-                for p,i in zip(self._unkn,t):
-                    
-                    if not i:
-                        continue
+                    for p,i in zip(self._unkn,t):
+                        
+                        if not i:
+                            continue
 
-                    ks+=f"*{p}"
+                        ks+=f"*{p}"
 
-                    if i>=2:
-                        ks+=f"^{i}"
+                        if i>=2:
+                            ks+=f"^{i}"
 
-            ks= f'{ks:{monomials}}'
-            s+=f'{"+"*(not ks.startswith(h))}{ks}'
+                ks= f'{ks:{monomials}}'
+                s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
-        if breaker:
-            if not s:
-                return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
-            return f"{s.strip('+'):{polynomial}}"
+            if breaker:
+                if not s:
+                    return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+                return f"{s.strip('+'):{polynomial}}"
 
         for power in sorted(self._icoef.keys(),reverse=True):
+            ks = ""
             coef = self._icoef[power]
 
             if not coef[1]:
@@ -438,3 +453,5 @@ if __name__ == '__main__':
     c = ComplexMultyPolynomial.fromText("(j)",("x",))
     j = ComplexMultyPolynomial.random(3,"x")
     print(3*(c*2+j)==(2*c- (-j))*3)
+    from examples import applicator
+    applicator(ComplexMultyPolynomial({'5-7': 1, '0-0': -2j}, ('x', 'y'), {}),-2,6)

@@ -978,31 +978,6 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
-    def __radd__(self, __o: Number | Self) -> Self|MultyPolinomial:
-        "Add a number or another MultyPolinomial to this SinglePolynomial"
-        if isinstance(__o,MultyPolinomial):
-            if isinstance(__o,SinglePolynomial):
-                if __o._unkn==self._unkn:
-                    t ={}
-                    i=0
-                    for power in self._icoef|__o._icoef:
-                        coef=self._icoef.get(power,["",0])[1]
-                        t[power] = [f"C{i}",coef+__o._icoef.get(power,["",0])[1]]
-                        i+=1
-                    return self.__class__({power:self._pcoef.get(power,0)+__o._pcoef.get(power,0) for power in self._pcoef|__o._pcoef},self._unkn,t)
-                __o=__o.toMulty()
-            return self.toMulty()+__o
-        
-        self._check__is_Number(__o,"{} cannot be added to a SinglePolinomial")
-
-        t=self._pcoef.copy()
-        if 0 in t:
-            t[0]+=__o
-        else:
-            t[0] = __o
-
-        return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
-
     def __iadd__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Add a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1179,60 +1154,6 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__({power:coef*__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
-    def __rmul__(self, __o: Number | Self) -> Self|MultyPolinomial:
-        "Multiplicate a number or another MultyPolinomial to this SinglePolynomial"
-        
-        if isinstance(__o,MultyPolinomial):
-            if isinstance(__o,SinglePolynomial):
-                if __o._unkn==self._unkn:
-                    t ={}
-                    tt = {}
-                    i=0
-
-                    for power,coef in self._pcoef.items():
-
-                        for p,c in __o._pcoef.items():
-                            k = p+power
-                            if k in t:
-                                t[k]+=coef*c
-                                continue
-                            t[k]=coef*c
-                        
-                        for p,c in __o._icoef.items():
-                            k = p+power
-                            if k in tt:
-                                tt[k][1]+=coef*c[1]
-                                continue
-                            tt[k]=[f"C{i}",coef*c]
-                            i+=1
-
-                    for power,coef in self._icoef.items():
-
-                        for p,c in __o._pcoef.items():
-                            k = p+power
-                            if k in tt:
-                                tt[k][1]+=coef[1]*c
-                                continue
-                            tt[k]=[f"C{i}",coef[1]*c]
-                            i+=1
-                        
-                        for p,c in __o._icoef.items():
-                            k = p+power
-                            if k in tt:
-                                tt[k][1]+=coef[1]*c[1]
-                                continue
-                            tt[k]=[f"C{i}",coef[1]*c]
-                            i+=1
-
-                    return self.__class__(t,self._unkn,tt)
-
-                __o=__o.toMulty()
-            return self.toMulty()*__o
-        
-        self._check__is_Number(__o,"{} cannot multiply a SinglePolinomial")
-
-        return self.__class__({power:coef*__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
-
     def __imul__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1294,7 +1215,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self
 
-    def divmod(self, __o:Number|Self|MultyPolinomial) -> tuple[Self|MultyPolinomial,Self|MultyPolinomial]:
+    def __divmod__(self, __o:Number|Self|MultyPolinomial) -> tuple[Self|MultyPolinomial,Self|MultyPolinomial]:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the quotient and the rest

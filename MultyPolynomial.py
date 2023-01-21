@@ -1749,42 +1749,8 @@ class MultyPolinomial:
     def __radd__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
 
-        if isinstance(__o, MultyPolinomial):
-            unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
-            lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
-            t = {lam(power.split("-"),self._unkn):coef for power,coef in self._pcoef.items()}
-            tt = {lam(power.split("-"),self._unkn):coef for power,coef in self._icoef.items()}
+        return self.__add__(__o)
 
-            for power, coef in __o._pcoef.items():
-                power = lam(power.split("-"),__o._unkn)
-
-                if power in t:
-                    t[power] += coef
-                else:
-                    t[power] = coef
-
-            for power, coef in __o._icoef.items():
-                power = lam(power.split("-"),__o._unkn)
-
-                if power in tt:
-                    tt[power][1] += coef[1]
-                else:
-                    tt[power] = coef[:]
-
-            return self.__class__(t,unkn,tt)
-
-        self._check__is_Number(__o,"{} cannot added to a MultyPolinomial")
-        
-        t = self._pcoef.copy()
-        power = self._get_key_0(len(self._unkn))
-        if power in t:
-            t[power]+=__o
-            return self.__class__(t,self._unkn,{power:coef[:] for power,coef in self._icoef.items()})
-        
-        t[power] =__o
-        
-        return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
-    
     def __iadd__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -2009,59 +1975,7 @@ class MultyPolinomial:
     def __rmul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
 
-        if isinstance(__o, MultyPolinomial):
-            unkn = tuple(sorted(tuple(set(self._unkn)|set(__o._unkn))))
-            lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in unkn)
-            join = lambda x,y:str(eval(f'{x}+{y}'))
-            ts = {lam(power.split("-"),self._unkn):coef for power,coef in self._pcoef.items()}
-            tts = {lam(power.split("-"),self._unkn):coef for power,coef in self._icoef.items()}
-            to = {lam(power.split("-"),__o._unkn):coef for power,coef in __o._pcoef.items()}
-            tto = {lam(power.split("-"),__o._unkn):coef for power,coef in __o._icoef.items()}
-            t = {}
-            tt={}
-
-            for power,coef in ts.items():
-                power=power.split("-")
-                for po,co in to.items():
-                    k = "-".join(map(join,power,po.split("-")))
-                    if k in t:
-                        t[k] += coef * co
-                        continue
-                    t[k] = coef * co
-                for po,co in tto.items():
-                    k = "-".join(map(join,power,po.split("-")))
-                    if k in tt:
-                        tt[k][1] += coef * co[1]
-                        continue
-                    tt[k] =["", coef * co[1]]
-
-            for power,coef in tts.items():
-                power=power.split("-")
-                for po,co in to.items():
-                    k = "-".join(map(join,power,po.split("-")))
-                    if k in tt:
-                        tt[k][1] += coef[1] * co
-                        continue
-                    tt[k] =["", coef[1] * co]
-                for po,co in tto.items():
-                    k = "-".join(map(join,power,po.split("-")))
-                    if k in tt:
-                        tt[k][1] += coef[1] * co[1]
-                        continue
-                    tt[k] =["", coef[1] * co[1]]
-            i=0
-            for power,coef in tt.copy().items():
-                if not coef[1]:
-                    del tt[power]
-                    continue
-                tt[power][0] = f"C{i}"
-                i+=1
-
-            return self.__class__(t,unkn,tt)
-        
-        self._check__is_Number(__o,"{} cannot multiply a MultyPolinomial")
-
-        return self.__class__( {power:coef*__o for power,coef in self._pcoef.items()},self._unkn,{power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
+        return self.__mul__(__o)
 
     def __imul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
@@ -2189,7 +2103,7 @@ class MultyPolinomial:
 
         return self
 
-    def divmod(self, __o:Number|Self) -> tuple[Self,Self]:
+    def __divmod__(self, __o:Number|Self) -> tuple[Self,Self]:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
         This method returns the quotient and the rest
@@ -2199,8 +2113,6 @@ class MultyPolinomial:
             raise ZeroDivisionError("Cannot divide by 0")
 
         if isinstance(__o, MultyPolinomial):
-            if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self.zero(*__o._unkn),self.copy()
 
             #this function let reorder the powers
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
@@ -2255,6 +2167,20 @@ class MultyPolinomial:
 
         return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()}),self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
 
+    def __rdivmod__(self, __o:Self) -> tuple[Self,Self]:
+        """
+        Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
+        This method returns the quotient and the rest
+        """
+
+        if not self:
+            raise ZeroDivisionError("Cannot divide by 0")
+
+        if not isinstance(__o, MultyPolinomial):
+            raise TypeError(f"{type(__o)} cannot be floor-divided nor moduled by a MultyPolinomial")
+
+        return __o.__divmod__(self)
+        
     def __floordiv__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
@@ -2265,8 +2191,6 @@ class MultyPolinomial:
             raise ZeroDivisionError("Cannot divide by 0")
 
         if isinstance(__o, MultyPolinomial):
-            if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self.zero(*__o._unkn)
 
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
             
@@ -2320,10 +2244,16 @@ class MultyPolinomial:
 
         return self.__class__({power:coef//__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]//__o] for power,coef in self._icoef.items()})
 
-    def __rfloordiv__(self,__o:Never) -> None:
+    def __rfloordiv__(self,__o:Self) -> Self:
         "the quotient of an Euclidean division"
 
-        raise TypeError(f"{type(__o)} cannot be floor-divided by MultyPolinomial")
+        if not self:
+            raise ZeroDivisionError("Cannot divide by 0")
+
+        if not isinstance(__o, MultyPolinomial):
+            raise TypeError(f"{type(__o)} cannot be floor-divided by a MultyPolinomial")
+
+        return __o.__floordiv__(self)
 
     def __ifloordiv__(self, __o:Number|Self) -> Self:
         """
@@ -2335,9 +2265,6 @@ class MultyPolinomial:
             raise ZeroDivisionError("Cannot divide by 0")
 
         if isinstance(__o, MultyPolinomial):
-            if any(_ou not in self._unkn for _ou in __o._unkn):
-                self.clear()
-                return self
 
             #this function let reorder the powers
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
@@ -2407,8 +2334,6 @@ class MultyPolinomial:
             raise ZeroDivisionError("Cannot divide by 0")
         
         if isinstance(__o, MultyPolinomial):
-            if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self.copy()
 
             #this function let reorder the powers
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
@@ -2456,10 +2381,16 @@ class MultyPolinomial:
         
         return self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
         
-    def __rmod__(self,__o:Never) -> None:
+    def __rmod__(self,__o:Self) -> Self:
         "the rest of an Euclidean division"
-        
-        raise TypeError(f"{type(__o)} cannot be moduled by MultyPolinomial")
+
+        if not self:
+            raise ZeroDivisionError("Cannot divide by 0")
+
+        if not isinstance(__o, MultyPolinomial):
+            raise TypeError(f"{type(__o)} cannot be moduled by a MultyPolinomial")
+
+        return __o.__mod__(self)
 
     def __imod__(self, __o:Number|Self) -> Self:
         """
@@ -2471,8 +2402,6 @@ class MultyPolinomial:
             raise ZeroDivisionError("Cannot divide by 0")
 
         if isinstance(__o, MultyPolinomial):
-            if any(_ou not in self._unkn for _ou in __o._unkn):
-                return self
 
             #this function let reorder the powers
             lam = lambda power, unkn_er:"-".join(power[unkn_er.index(unk)] if unk in unkn_er else '0' for unk in self._unkn)
@@ -2522,9 +2451,12 @@ class MultyPolinomial:
 
         return self
 
-
 if __name__ == '__main__':
     x = MultyPolinomial.fromText("-x-x*y^2","y")*2
-    print(x.translate(5,x=2,y=3.5))
-    x.translate_ip(5,x=2,y=3.5)
+    y:MultyPolinomial= x.translate(5,x=2,y=3.5)/2
     print(x)
+    print(y)
+    # x.translate_ip(5,x=2,y=3.5)
+    # print(x)
+    print(y.__mod__(x))
+    print(x.__rmod__(y))

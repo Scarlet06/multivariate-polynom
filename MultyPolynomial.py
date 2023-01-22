@@ -31,9 +31,6 @@ class MultyPolinomial:
         if type(unknown) is not Unknowns.__origin__ :
             raise TypeError("'unknown' has to be a tuple which contains only strings")
 
-        if any(len(char)!=1 for char in unknown):
-            raise LenghtError("All the unknowns in unknown have to be lenght 1")
-
         if type(powers_coefficients) is not Powers.__origin__ :
             raise TypeError("'powers_coefficients' has to be a dict")
 
@@ -69,7 +66,7 @@ class MultyPolinomial:
         - unknown = (x,y)
 
         and eventually a dictonary for the "integral coefficient" dictionary:
-        - integrals_coefficients = {1-0:[C0,3]} -> 3*C0*x
+        - integrals_coefficients = {1-0:['C0',3]} -> 3*C0*x
         """
     
     def __init__(self, powers_coefficients:Powers, unknown:Unknowns, integrals_coefficients:Integrals|None=None) -> None:
@@ -354,13 +351,13 @@ class MultyPolinomial:
     ## SOME INTERESTING METHODS ##
     def has_integrals_const(self) -> bool:
         """
-        This function check if any integral's coef is present
+        This function check if any integral's coef are present
         """
         return any(i[1] for i in self._icoef.values())
 
     def is_a_number(self) -> bool:
         """
-        Retruns True if and only if there is not integration's constants and all the coef qwhich degree is greater than 0 are 0
+        Retruns True if and only if there is not integration's constants and all the coef which degree is greater than 0 are 0
         """
 
         t=self._get_key_0(len(self._unkn))
@@ -397,18 +394,18 @@ class MultyPolinomial:
         return len(self._unkn)
 
     @overload
-    def monoms(self) -> Generator[MultyPolinomial]:
+    def monoms(self) -> Generator[Self]:
         """
         It returns all the monoms of this polynomial
         """
 
     @overload
-    def monoms(self, __ignore=False) -> Generator[MultyPolinomial]:
+    def monoms(self, __ignore=False) -> Generator[Self]:
         """
         It returns all the monoms of this polynomial except the Integrals constants if __ignore is True
         """
 
-    def monoms(self, __ignore=False) -> Generator[MultyPolinomial]:
+    def monoms(self, __ignore=False) -> Generator[Self]:
         h=True
         for power,coef in self._pcoef.items():
             if not coef:
@@ -430,6 +427,7 @@ class MultyPolinomial:
         
         if h:
             yield self.__class__(k,self._unkn)
+            self._pcoef.update(k)
 
     @overload
     def deg(self) -> int:
@@ -551,7 +549,7 @@ class MultyPolinomial:
                     s+=f"^{i}"
 
         if not s:
-            s = "0"
+            return "0"
 
         return s.lstrip("+")
 
@@ -622,7 +620,7 @@ class MultyPolinomial:
 
             if breaker:
                 if not s:
-                    return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+                    return f"""{f"{f'{0:{numbers}}':{monomials}}":{polynomial}}"""
                 return f"{s.strip('+'):{polynomial}}"
 
         for power in sorted(self._icoef.keys(),reverse=True):
@@ -652,7 +650,7 @@ class MultyPolinomial:
             s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
         if not s:
-            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+            return f"""{f"{f'{0:{numbers}}':{monomials}}":{polynomial}}"""
         return f"{s.strip('+'):{polynomial}}"
 
     @staticmethod
@@ -670,37 +668,29 @@ class MultyPolinomial:
     ## EQUALITY AND NON-EQUALITY METHODS ##
     def __eq__(self, __o:Any) -> bool:
         """
-        It checks if two MultyPolinomial are identical between eachother or if MultyPolinomial is identical to the given number
-        Returns False otherways
+        It checks if two objects are identical in the string form (respecting the order of powers)
         """
         
-        if isinstance(__o,MultyPolinomial|Number):
-            return self.__str__()==__o.__str__()
-
-        return False
+        return self.__str__()==str(__o)
 
     def __ne__(self, __o:Any) -> bool:
         """
-        It checks if two MultyPolinomial are different between eachother or if MultyPolinomial is not to the given number
-        Returns True otherways
+        It checks if two objects are different in the string form (respecting the order of powers)
         """
         
-        if isinstance(__o,MultyPolinomial|Number):
-            return self.__str__()!=__o.__str__()
-
-        return True
+        return self.__str__()!=str(__o)
 
     @overload
     def round_equal(self, __o:Any) -> bool:
         """
-        It checks if two MultyPolinomial are almost equal by rounding
+        It checks if two objects are almost equal by rounding
         each coef at the 14th decimal
         """
         
     @overload
     def round_equal(self, __o:Any, precision:int=14) -> bool:
         """
-        It checks if two MultyPolinomial are almost equal by rounding
+        It checks if two objects are almost equal by rounding
         each coef at the given position decimal
         """
 
@@ -708,19 +698,19 @@ class MultyPolinomial:
         if isinstance(__o,MultyPolinomial|Number):
             return round(self,precision) == round(__o, precision)
 
-        return False
+        return round(self,precision) == str(__o)
 
     @overload
     def non_round_equal(self, __o:Any) -> bool:
         """
-        It checks if two MultyPolinomial are NOT almost equal by rounding
+        It checks if two objects are NOT almost equal by rounding
         each coef at the 14th decimal
         """
         
     @overload
     def non_round_equal(self, __o:Any, precision:int=14) -> bool:
         """
-        It checks if two MultyPolinomial are NOT almost equal by rounding
+        It checks if two objects are NOT almost equal by rounding
         each coef at the given position decimal
         """
 
@@ -728,40 +718,35 @@ class MultyPolinomial:
         if isinstance(__o,MultyPolinomial|Number):
             return round(self,precision) != round(__o, precision)
             
-        return False
+        return round(self,precision) != str(__o)
 
     def almost_equal(self,__o:Any) -> bool:
         """
-        It checks if two MultyPolinomial are different between eachother or if MultyPolinomial is not to the given number
-        But ignores the Integrals' coefficients
-        Returns True otherways
+        It checks if two objects are identical in the string form (respecting the order of powers)
+        But it ignores the integral parts of the polynomials
         """
         
         if isinstance(__o,MultyPolinomial):
             return self.__format__('i')==__o.__format__('i')
-        if isinstance(self, Number):
-            return self.__format__('i')==__o.__str__()
-
-        return False
+        
+        return self.__format__('i')==str(__o)
 
     def non_almost_equal(self,__o:Any) -> bool:
         """
-        It checks if two MultyPolinomial are different between eachother or if MultyPolinomial is not to the given number
-        But ignores the Integrals' coefficients
-        Returns True otherways
+        It checks if two objects are different in the string form (respecting the order of powers)
+        But it ignores the integral parts of the polynomials
         """
         
         if isinstance(__o,MultyPolinomial):
             return self.__format__('i')!=__o.__format__('i')
-        if isinstance(self, Number):
-            return self.__format__('i')!=__o.__str__()
-
-        return True
+        
+        return self.__format__('i')==str(__o)
 
     def __bool__(self) -> bool:
         """
         It returns False if and only if this is 0
         """
+
         return any(self._pcoef.values()) or any(i[1] for i in self._icoef.values())
 
 
@@ -1448,7 +1433,7 @@ class MultyPolinomial:
 
     def __abs__(self) -> Self:
         """
-        It returns a new MultyPolinomial with every coef positive. It doesn't change the unknown sign
+        It returns a new MultyPolinomial with every coef positive
         """
         
         return self.__class__({power:abs(coef) for power,coef in self._pcoef.items() if coef}, self._unkn, {power:[coef[0],abs(coef[1])] for power,coef in self._icoef.items() if coef})

@@ -9,7 +9,17 @@ Integrals = dict[str,list[str|Number]]
 class ComplexMultyPolynomial(MultyPolinomial):
     "This object is used to create and match the needs for a multivariative polinomial with complex coef"
 
+    #the only variables used by the object
     __slots__ = ()
+
+    ## SOME INITIALIZATION && CLASSMETHODS ##
+    @classmethod
+    def fromMulty(cls: type[Self], m:MultyPolinomial) -> Self:
+        """
+        Given another MultyPolinomial it creates a new ComplexMultyPolynomial with the same informations
+        """
+        
+        return super().fromMulty(m)
 
     @overload
     @classmethod
@@ -68,6 +78,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
         text = text.replace("-","+-")
         if text.startswith("+"):
             text = text[1:]
+            
         for part in text.split("+"):
             power = ["0"]*len(unknown)
             coef = "1"
@@ -143,6 +154,80 @@ class ComplexMultyPolynomial(MultyPolinomial):
             return cls(t,tuple(unknown), integrals_coefficients)
         
         return cls(t,tuple(unknown), {})
+
+    @overload
+    @classmethod
+    def one(cls: type[Self]) -> Self:
+        """
+        This classmethod creates a ComplexMultyPolynomial with only the coef 1
+        """
+
+    @overload
+    @classmethod
+    def one(cls: type[Self], *unknowns) -> Self:
+        """
+        This classmethod creates a ComplexMultyPolynomial with only the coef 1
+        If unknowns are given, it initializes it with these
+        """
+
+    @classmethod
+    def one(cls: type[Self], *unknowns) -> Self:
+
+        return super().one(*unknowns)
+
+    @overload
+    @classmethod
+    def zero(cls: type[Self]) -> Self:
+        """
+        This classmethod creates a ComplexMultyPolynomial with only the coef 0
+        """
+
+    @overload
+    @classmethod
+    def zero(cls: type[Self], *unknowns:str) -> Self:
+        """
+        This classmethod creates a ComplexMultyPolynomial with only the coef 0
+        If unknowns are given, it initializes it with these, else it won't have any
+        """
+
+    @classmethod
+    def zero(cls: type[Self], *unknowns:str) -> Self:
+
+        return super().zero(*unknowns)
+
+    @overload
+    @classmethod
+    def random(cls: type[Self], maxdeg:int) -> Self:
+        """
+        This classmethod creates a random ComplexMultyPolynomial with at maximum the given degree to every monom. It is a lil' junk
+
+        The unknown will be 'x'
+        """
+
+    @overload
+    @classmethod
+    def random(cls: type[Self], maxdeg:int, *unknowns:str) -> Self:
+        """
+        This classmethod creates a random ComplexMultyPolynomial with at maximum the given degree to every monom. It is a lil' junk
+
+        it will use the given unknowns
+        """
+
+    @overload
+    @classmethod
+    def random(cls: type[Self], maxdeg:int, *unknowns:str, **maxunknowns:int) -> Self:
+        """
+        This classmethod creates a random ComplexMultyPolynomial with at maximum the given degree to every monom. It is a lil' junk
+
+        it will use the given unknowns but also the unknown used as key for maxunknowns
+
+        if kwargs are given, the int will be the max power for its key-unknown
+        """
+
+    @classmethod
+    def random(cls: type[Self], maxdeg:int, *unknowns:str, **maxunknowns:int) -> Self:
+        
+        return super().random(maxdeg, *unknowns, **maxunknowns)
 
 
     ## SOME INTERESTING METHODS ##
@@ -257,7 +342,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
                     s+=f"^{i}"
 
         if not s:
-            s = "0"
+            return "0"
 
         return s.strip("+")
 
@@ -336,7 +421,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
 
             if breaker:
                 if not s:
-                    return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+                    return f"""{f"{f'{0:{numbers}}':{monomials}}":{polynomial}}"""
                 return f"{s.strip('+'):{polynomial}}"
 
         for power in sorted(self._icoef.keys(),reverse=True):
@@ -374,7 +459,7 @@ class ComplexMultyPolynomial(MultyPolinomial):
             s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
         if not s:
-            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+            return f"""{f"{f'{0:{numbers}}':{monomials}}":{polynomial}}"""
         return f"{s.strip('+'):{polynomial}}"
 
 
@@ -413,11 +498,16 @@ class ComplexMultyPolynomial(MultyPolinomial):
         if not isinstance(__o, Number):
             raise TypeError(error.format(type(__o)))
 
-    def divmod(self, __o:Never) -> None:
+    def __divmod__(self, __o:Never) -> None:
         "Doesn't work here"
 
         raise TypeError("complex cannot be moduled nor floor-divided")
 
+    def __rdivmod__(self, __o:Never) -> None:
+        "Doesn't work here"
+
+        raise TypeError("complex cannot be moduled nor floor-divided")
+        
     def __floordiv__(self, __o:Never) -> None:
         "Doesn't work here"
 
@@ -455,3 +545,6 @@ if __name__ == '__main__':
     print(3*(c*2+j)==(2*c- (-j))*3)
     from examples import applicator
     applicator(ComplexMultyPolynomial({'5-7': 1, '0-0': -2j}, ('x', 'y'), {}),-2,6)
+    m = MultyPolinomial.random(5)
+    m+=j
+    print(m,type(m))

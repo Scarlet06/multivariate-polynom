@@ -6,7 +6,9 @@ Powers = dict[int,Number]
 Integrals = dict[int,list[str|Number]]
 
 class SinglePolynomial(MultyPolinomial):
+    "This object is used to create and match the needs for a polinomial in a single variable"
 
+    #the only variables used by the object
     __slots__ = ()
 
     ## SOME INITIALIZATION && CLASSMETHODS ##
@@ -56,7 +58,7 @@ class SinglePolynomial(MultyPolinomial):
         - unknown = 'x'
 
         and eventually a dictonary for the "integral coefficient" dictionary:
-        - integrals_coefficients = {'1':[C0,3]} -> 3*C0*x
+        - integrals_coefficients = {'1':['C0',3]} -> 3*C0*x
         """
     
     def __init__(self, powers_coefficients:Powers, unknown:Unknowns, integrals_coefficients:Integrals|None=None) -> None:
@@ -68,6 +70,14 @@ class SinglePolynomial(MultyPolinomial):
             self._icoef = {}
         else:
             self._icoef = integrals_coefficients
+
+    @classmethod
+    def fromSingle(cls: type[Self], s:SinglePolynomial) -> Self:
+        """
+        Given another SinglePolynomial it creates a new SinglePolynomial with the same informations
+        """
+
+        return super().fromMulty(s)
 
     @classmethod
     def fromMulty(cls: type[Self], m:MultyPolinomial) -> Self:
@@ -284,8 +294,8 @@ class SinglePolynomial(MultyPolinomial):
     @unknown.setter
     def unknown(self, unknowns:Unknowns) -> None:
         "tuple of the unknown"
-        if not isinstance(unknowns, Unknowns) or len(unknowns)!=1:
-            raise TypeError("'unknown' has to be a string of lenght 1")
+        if not isinstance(unknowns, Unknowns):
+            raise TypeError("'unknown' has to be a string")
         self._unkn = unknowns
 
     @property
@@ -320,14 +330,27 @@ class SinglePolynomial(MultyPolinomial):
 
     ## SOME INTERESTING METHODS ##
     def toMulty(self) -> MultyPolinomial:
-        "It convert this complex multivariative polynomial into a real one"
+        "It convert this single polynomial into a multy one"
         return MultyPolinomial({str(power):coef for power,coef in self._pcoef.items()},(self._unkn,),{str(power):coef.copy() for power,coef in self._icoef.items()})
     
+    def __len__(self) -> int:
+        """
+        return the number of unknowns 
+        """
+        return 1
+
     def deg(self) -> int:
         """
         it returns the maximum degree of the polynomial
         """
         return max(0,0,*tuple(power for power,coef in self._pcoef.items() if coef),*tuple(power for power,coef in self._icoef.items() if coef))
+        
+    def degs(self) -> int:
+        """
+        it returns the maximum degree of the polynomial
+        """
+
+        return self.deg()
         
 
     ## STRING METHODS ##
@@ -462,7 +485,7 @@ class SinglePolynomial(MultyPolinomial):
 
             if breaker:
                 if not s:
-                    return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+                    return f"""{f"{f'{0:{numbers}}':{monomials}}":{polynomial}}"""
                 return f"{s.strip('+'):{polynomial}}"
 
         for power in sorted(self._icoef.keys(),reverse=True):
@@ -486,7 +509,7 @@ class SinglePolynomial(MultyPolinomial):
             s+=f'{"+"*(not ks.startswith(h))}{ks}'
 
         if not s:
-            return f"""{f"{f'{0:{numbers}}':{monomials}} ":{polynomial}}"""
+            return f"""{f"{f'{0:{numbers}}':{monomials}}":{polynomial}}"""
         return f"{s.strip('+'):{polynomial}}"
 
     @staticmethod
@@ -821,6 +844,53 @@ class SinglePolynomial(MultyPolinomial):
 
 
     ## TRASNFORMATIONS ##
+    def __neg__(self) -> Self:
+        """
+        It returns a new SinglePolynomial with every coef negated
+        """
+
+        return super().__neg__()
+
+    def __pos__(self) -> Self:
+        """
+        It returns a new SinglePolynomial
+        """
+
+        return super().__pos__()
+
+    def __abs__(self) -> Self:
+        """
+        It returns a new SinglePolynomial with every coef positive
+        """
+        
+        return super().__abs__()
+
+    @overload
+    def __round__(self) -> Self:
+        """
+        It returns a new SinglePolynomial with each coef rounded to the closer integer
+        """
+    
+    @overload
+    def __round__(self, __n:int|None = None) -> Self:
+        """
+        It returns a new SinglePolynomial with each coef in the given position
+        """
+
+    def __round__(self, __n:int|None = None) -> Self:
+
+        return super().__round__(__n)
+
+    def __floor__(self) -> Self:
+        "It returns the SinglePolynomial with all the coefs floored"
+
+        return super().__floor__()
+
+    def __ceil__(self) -> Self:
+        "It returns the SinglePolynomial with all the coefs ceiled"
+
+        return super().__ceil__()
+
     def clear(self) -> None:
         """
         It transform itself to zero
@@ -832,7 +902,7 @@ class SinglePolynomial(MultyPolinomial):
 
     def clean(self) -> Self:
         """
-        It returns a new MultyPolinomial removing any unkown wich isn't used. It skips any zero coef
+        It returns a new SinglePolynomial removing any unkown wich isn't used. It skips any zero coef
         """
         
         p = {power:coef for power,coef in self._pcoef.items() if coef}
@@ -841,7 +911,7 @@ class SinglePolynomial(MultyPolinomial):
 
     def clean_ip(self) -> None:
         """
-        It updates this MultyPolinomial by removing any unkown wich isn't used. It removes any zero coef
+        It updates this SinglePolynomial by removing any unkown wich isn't used. It removes any zero coef
         """
 
         for power,coef in self._pcoef.items():
@@ -854,6 +924,23 @@ class SinglePolynomial(MultyPolinomial):
         for power,coef in self._icoef.items():
             if not coef[1]:
                 del self._icoef[power]
+
+    @overload
+    def copy(self) -> Self:
+        """
+        It creates a copy of the current SinglePolynomial
+        """
+
+    @overload
+    def copy(self, __ignore:bool=False) -> Self:
+        """
+        It creates a copy of the current SinglePolynomial
+        if __ignore is True, the Integrals part will be ignored
+        """
+
+    def copy(self, __ignore:bool = False) -> Self:
+
+        return super().copy(__ignore)
 
     @overload
     def translate(self, *args:Number) -> Self|MultyPolinomial:
@@ -1422,5 +1509,9 @@ class SinglePolynomial(MultyPolinomial):
 if __name__ == '__main__':
     y = SinglePolynomial.fromText("3*x+x-1")
     y.unknown="y"
-    print(SinglePolynomial.fromMulty(y).__repr__())
+    print(SinglePolynomial.fromSingle(y).__repr__())
     print(y.translate(5,y=2))
+    x = MultyPolinomial.fromText("x*y+y+1")
+    z = y+x
+    print(z,type(z))
+

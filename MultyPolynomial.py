@@ -1693,6 +1693,25 @@ class MultyPolinomial:
         if not isinstance(__o, Number):
             raise TypeError(error.format(type(__o)))
 
+    def _type_handler(func):
+        "this decorator checks and handles all the polynomial types"
+        def transformer(self, __o:Number|Self) -> Self:
+            if isinstance(__o,MultyPolinomial):
+                if hasattr(__o,'__complex__'):
+                    if hasattr(__o,'toComplexMulty'):
+                        return func(__o.toComplexMulty(),self)
+                    return func(__o,self)
+                if hasattr(self,'__complex__'):
+                    if hasattr(__o,'toMulty'):
+                        return func(self,__o.toMulty())
+                    return func(self,__o)
+                if hasattr(__o,'toMulty'):
+                    return func(__o.toMulty(),self)
+            return func(self,__o)
+        
+        return transformer
+
+    @_type_handler
     def __add__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
@@ -1736,6 +1755,7 @@ class MultyPolinomial:
 
         return self.__add__(__o)
 
+    @_type_handler
     def __iadd__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1779,6 +1799,7 @@ class MultyPolinomial:
         
         return self
 
+    @_type_handler
     def __sub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1818,6 +1839,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
+    @_type_handler
     def __rsub__(self, __o:Number | Self) -> Self:
         "subtract this MultyPolinomial to a number or another MultyPolinomial"
 
@@ -1857,6 +1879,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef[:] for power,coef in self._icoef.items()})
     
+    @_type_handler
     def __isub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1900,6 +1923,7 @@ class MultyPolinomial:
         
         return self
 
+    @_type_handler
     def __mul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
         
@@ -1962,6 +1986,7 @@ class MultyPolinomial:
 
         return self.__mul__(__o)
 
+    @_type_handler
     def __imul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
 

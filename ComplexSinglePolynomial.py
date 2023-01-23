@@ -319,6 +319,7 @@ class ComplexSinglePolynomial(SinglePolynomial,ComplexMultyPolynomial):
                     ks+=f"{coef:{numbers}}"
                         
                 if not power:
+                    s+=f'{"+"*(not ks.startswith(h))}{f"{ks:{monomials}}"}'
                     continue
 
                 ks+=f"*{self._unkn}"
@@ -352,6 +353,7 @@ class ComplexSinglePolynomial(SinglePolynomial,ComplexMultyPolynomial):
                 ks+=f"{coef[1]:{numbers}}*{coef[0]}"
                     
             if not power:
+                s+=f'{"+"*(not ks.startswith(h))}{f"{ks:{monomials}}"}'
                 continue
 
             ks+=f"*{self._unkn}"
@@ -445,12 +447,15 @@ class ComplexSinglePolynomial(SinglePolynomial,ComplexMultyPolynomial):
         raise TypeError("complex cannot module nor be moduled")
 
 
-mp = MultyPolinomial.fromText("3*x+1")
-cmp = ComplexMultyPolynomial.fromText("-2x+1")
-sp = SinglePolynomial.fromText("-x")
-csp = ComplexSinglePolynomial.fromText("-(3j+1)*x")
+if __name__ == '__main__':
+    m = MultyPolinomial.fromText("x+y")
+    cm = ComplexMultyPolynomial.fromText("(j)*x+y")
+    s = SinglePolynomial.fromText("1+x")
+    cs = ComplexSinglePolynomial.fromText("-(1)*x")
 
-print(csp)
-print(type(x:=csp.toMulty()),x)
-print(type(x:=csp.toComplexMulty()),x)
-print(type(x:=csp.toSingle()),x)
+    from itertools import product
+    for i,j in product((m,cm,s,cs),repeat=2):
+        try:
+            print(f'{f"{i.__class__.__name__:<3}+{j.__class__.__name__:>3}":<10}\n{((k:=i+j)).__class__.__name__:>5} = {k:+;;>4}')
+        except:
+            print(f'{f"{i.__class__.__name__:<3}+{j.__class__.__name__:>3}":<10}\n{"ERROR":>12}')

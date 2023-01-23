@@ -473,6 +473,7 @@ class SinglePolynomial(MultyPolinomial):
                 ks = f"{coef:{numbers}}"
                         
                 if not power:
+                    s+=f'{"+"*(not ks.startswith(h))}{f"{ks:{monomials}}"}'
                     continue
 
                 ks+=f"*{self._unkn}"
@@ -498,6 +499,7 @@ class SinglePolynomial(MultyPolinomial):
             ks = f"{coef[1]:{numbers}}*{coef[0]}"
                     
             if not power:
+                s+=f'{"+"*(not ks.startswith(h))}{f"{ks:{monomials}}"}'
                 continue
 
             ks+=f"*{self._unkn}"
@@ -1039,6 +1041,25 @@ class SinglePolynomial(MultyPolinomial):
 
 
     ## OPERATION WITH MULTIVARIATIVE POLYNOMIALS ##
+    def _type_handler(func):
+        "this decorator checks and handles all the polynomial types"
+        def transformer(self, __o:Number|Self) -> Self:
+            if isinstance(__o,MultyPolinomial):
+                if isinstance(__o,SinglePolynomial):
+                    if hasattr(__o,'__complex__'):#CS
+                        return func(__o,self)
+                    return func(self,__o)
+
+                if hasattr(self,'toComplexMulty'):#
+                    t = self.toComplexMulty()
+                    return t.__getattribute__(func.__name__)(__o)
+                return __o.__getattribute__(func.__name__)(self.toMulty())
+            
+            return func(self,__o)
+        
+        return transformer
+
+    @_type_handler
     def __add__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Add a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1051,6 +1072,8 @@ class SinglePolynomial(MultyPolinomial):
                         coef=self._icoef.get(power,["",0])[1]
                         t[power] = [f"C{i}",coef+__o._icoef.get(power,["",0])[1]]
                         i+=1
+                    s=self._pcoef|__o._pcoef
+                    g={power:self._pcoef.get(power,0)+__o._pcoef.get(power,0) for power in self._pcoef|__o._pcoef}
                     return self.__class__({power:self._pcoef.get(power,0)+__o._pcoef.get(power,0) for power in self._pcoef|__o._pcoef},self._unkn,t)
                 __o=__o.toMulty()
             return self.toMulty()+__o
@@ -1065,6 +1088,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
+    @_type_handler
     def __iadd__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Add a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1101,6 +1125,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self
 
+    @_type_handler
     def __sub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "subtract a number or another MultyPolinomial to this SinglePolynomial"
 
@@ -1127,6 +1152,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
+    @_type_handler
     def __rsub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "subtract this SinglePolynomial to a number or another MultyPolinomial"
         
@@ -1153,6 +1179,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
+    @_type_handler
     def __isub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Subtract a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1187,6 +1214,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self
 
+    @_type_handler
     def __mul__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1241,6 +1269,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__({power:coef*__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
+    @_type_handler
     def __imul__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this SinglePolynomial"
         

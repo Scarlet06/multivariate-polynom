@@ -1,5 +1,5 @@
 from __future__ import annotations
-from MultyPolynomial import MultyPolinomial, LenghtError, Self, Any, Never, Generator, Number, overload, findall, match, floor, ceil,prod, randint,uniform
+from MultyPolynomial import MultyPolinomial, LenghtError, Self, Never, Callable, Number, overload, match, floor, randint, uniform
 
 Unknowns = str
 Powers = dict[int,Number]
@@ -1041,20 +1041,27 @@ class SinglePolynomial(MultyPolinomial):
 
 
     ## OPERATION WITH MULTIVARIATIVE POLYNOMIALS ##
-    def _type_handler(func):
+    def _type_handler(func: Callable[[Self,Number|Self],Self]) -> Callable[[Self,Number|Self],Self]:
         "this decorator checks and handles all the polynomial types"
-        def transformer(self, __o:Number|Self) -> Self:
+        def transformer(self:type[Self], __o:Number|Self) -> Self:
+            # since we call this function here, self ahs to be one of SP or CSP. So it checks if __o is a SP with the __complex method -> so it is a CSP
+            # if it iis, it uses func on __o else __o is a SP and since self can still be SP or CSP func is used on it first
+            # else __o has to be one of MP or CMP, and func cannot be used on those, 'couse is a SP method.
+            # So it checks if self is a CSP and eventualy converts it into a CMP with its method, and calls its own func on it
+            # else self is a MP and __o can still be CMP or MP, so it uses its own func.
+            # If __o wasn't a polynomial at all, it check if it was a number and calls func on self 
             if isinstance(__o,MultyPolinomial):
                 if isinstance(__o,SinglePolynomial):
-                    if hasattr(__o,'__complex__'):#CS
+                    if hasattr(__o,'__complex__'):
                         return func(__o,self)
                     return func(self,__o)
 
-                if hasattr(self,'toComplexMulty'):#
+                if hasattr(self,'toComplexMulty'):
                     t = self.toComplexMulty()
                     return t.__getattribute__(func.__name__)(__o)
                 return __o.__getattribute__(func.__name__)(self.toMulty())
             
+            self._check__is_Number(__o, func.__name__)
             return func(self,__o)
         
         return transformer
@@ -1072,13 +1079,9 @@ class SinglePolynomial(MultyPolinomial):
                         coef=self._icoef.get(power,["",0])[1]
                         t[power] = [f"C{i}",coef+__o._icoef.get(power,["",0])[1]]
                         i+=1
-                    s=self._pcoef|__o._pcoef
-                    g={power:self._pcoef.get(power,0)+__o._pcoef.get(power,0) for power in self._pcoef|__o._pcoef}
                     return self.__class__({power:self._pcoef.get(power,0)+__o._pcoef.get(power,0) for power in self._pcoef|__o._pcoef},self._unkn,t)
                 __o=__o.toMulty()
             return self.toMulty()+__o
-        
-        self._check__is_Number(__o,"{} cannot be added to a SinglePolinomial")
 
         t=self._pcoef.copy()
         if 0 in t:
@@ -1115,8 +1118,6 @@ class SinglePolynomial(MultyPolinomial):
                 __o=__o.toMulty()
             return self.toMulty()+__o
         
-        self._check__is_Number(__o,"{} cannot be added to a SinglePolinomial")
-
         self._pcoef
         if 0 in self._pcoef:
             self._pcoef[0]+=__o
@@ -1141,8 +1142,6 @@ class SinglePolynomial(MultyPolinomial):
                     return self.__class__({power:self._pcoef.get(power,0)-__o._pcoef.get(power,0) for power in self._pcoef|__o._pcoef},self._unkn,t)
                 __o=__o.toMulty()
             return self.toMulty()-__o
-        
-        self._check__is_Number(__o,"{} cannot subtract a SinglePolinomial")
 
         t=self._pcoef.copy()
         if 0 in t:
@@ -1169,8 +1168,6 @@ class SinglePolynomial(MultyPolinomial):
                 __o=__o.toMulty()
             return __o-self.toMulty()
         
-        self._check__is_Number(__o,"{} cannot be subtracted be a SinglePolinomial")
-
         t=self._pcoef.copy()
         if 0 in t:
             t[0]-=__o
@@ -1204,8 +1201,6 @@ class SinglePolynomial(MultyPolinomial):
                 __o=__o.toMulty()
             return self.toMulty()-__o
         
-        self._check__is_Number(__o,"{} cannot subtract a SinglePolinomial")
-
         self._pcoef
         if 0 in self._pcoef:
             self._pcoef[0]-=__o
@@ -1265,8 +1260,6 @@ class SinglePolynomial(MultyPolinomial):
                 __o=__o.toMulty()
             return self.toMulty()*__o
         
-        self._check__is_Number(__o,"{} cannot multiply a SinglePolinomial")
-
         return self.__class__({power:coef*__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
     @_type_handler
@@ -1322,8 +1315,6 @@ class SinglePolynomial(MultyPolinomial):
                 __o=__o.toMulty()
             return self.toMulty()*__o
         
-        self._check__is_Number(__o,"{} cannot multiply a SinglePolinomial")
-
         for power in self._pcoef:
             self._pcoef[power]*=__o
         for power in self._icoef:

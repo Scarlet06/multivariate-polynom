@@ -452,10 +452,11 @@ if __name__ == '__main__':
     cm = ComplexMultyPolynomial.fromText("(j)*x+y")
     s = SinglePolynomial.fromText("1+x")
     cs = ComplexSinglePolynomial.fromText("-(1)*x")
-
     from itertools import product
-    for i,j in product((m,cm,s,cs),repeat=2):
-        try:
-            print(f'{f"{i.__class__.__name__:<3}+{j.__class__.__name__:>3}":<10}\n{((k:=i+j)).__class__.__name__:>5} = {k:+;;>4}')
-        except:
-            print(f'{f"{i.__class__.__name__:<3}+{j.__class__.__name__:>3}":<10}\n{"ERROR":>12}')
+    for op in ('__isub__','__add__','__radd__','__iadd__','__sub__','__rsub__','__mul__','__rmul__','__imul__'):
+        input(op)
+        for i,j in product((m,cm,s,cs),repeat=2):
+            try:
+                print(f'{f"{i.__class__.__name__:<3}{op}{j.__class__.__name__:>3}":<60}{((k:=i.__getattribute__(op)(j))).__class__.__name__:>5} = {k:+;;>4}')
+            except:
+                print(f'{f"{i.__class__.__name__:<3}{op}{j.__class__.__name__:>3}":<60}{"ERROR":>12}')

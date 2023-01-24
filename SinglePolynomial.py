@@ -1041,32 +1041,40 @@ class SinglePolynomial(MultyPolinomial):
 
 
     ## OPERATION WITH MULTIVARIATIVE POLYNOMIALS ##
-    def _type_handler(func: Callable[[Self,Number|Self],Self]) -> Callable[[Self,Number|Self],Self]:
+    def _type_handler(invert:bool=False) -> Callable[[Self,Number|Self],Self]:
         "this decorator checks and handles all the polynomial types"
-        def transformer(self:type[Self], __o:Number|Self) -> Self:
-            # since we call this function here, self ahs to be one of SP or CSP. So it checks if __o is a SP with the __complex method -> so it is a CSP
-            # if it iis, it uses func on __o else __o is a SP and since self can still be SP or CSP func is used on it first
-            # else __o has to be one of MP or CMP, and func cannot be used on those, 'couse is a SP method.
-            # So it checks if self is a CSP and eventualy converts it into a CMP with its method, and calls its own func on it
-            # else self is a MP and __o can still be CMP or MP, so it uses its own func.
-            # If __o wasn't a polynomial at all, it check if it was a number and calls func on self 
-            if isinstance(__o,MultyPolinomial):
-                if isinstance(__o,SinglePolynomial):
-                    if hasattr(__o,'__complex__'):
-                        return func(__o,self)
-                    return func(self,__o)
+        def inverter(func: Callable[[Self,Number|Self],Self]) -> Callable[[Self,Number|Self],Self]:
+            "This fuction was added to handle the inverse for subtractions"
+            def transformer(self:type[Self], __o:Number|Self) -> Self:
+                # since we call this function here, self ahs to be one of SP or CSP. So it checks if __o is a SP with the __complex method -> so it is a CSP
+                # if it iis, it uses func on __o else __o is a SP and since self can still be SP or CSP func is used on it first
+                # else __o has to be one of MP or CMP, and func cannot be used on those, 'couse is a SP method.
+                # So it checks if self is a CSP and eventualy converts it into a CMP with its method, and calls its own func on it
+                # else self is a MP and __o can still be CMP or MP, so it uses its own func.
+                # If __o wasn't a polynomial at all, it check if it was a number and calls func on self 
+                if isinstance(__o,MultyPolinomial):
+                    if isinstance(__o,SinglePolynomial):
+                        if hasattr(__o,'__complex__'):
+                            if invert:
+                                return -func(__o,self)
+                            return func(__o,self)
+                        return func(self,__o)
 
-                if hasattr(self,'toComplexMulty'):
-                    t = self.toComplexMulty()
-                    return t.__getattribute__(func.__name__)(__o)
-                return __o.__getattribute__(func.__name__)(self.toMulty())
+                    if hasattr(self,'toComplexMulty'):
+                        t = self.toComplexMulty()
+                        return t.__getattribute__(func.__name__)(__o)
+                    elif invert:
+                        return -__o.__getattribute__(func.__name__)(self.toMulty())
+                    return __o.__getattribute__(func.__name__)(self.toMulty())
+                
+                self._check__is_Number(__o, func.__name__)
+                return func(self,__o)
             
-            self._check__is_Number(__o, func.__name__)
-            return func(self,__o)
-        
-        return transformer
+            return transformer
 
-    @_type_handler
+        return inverter
+
+    @_type_handler()
     def __add__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Add a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1091,7 +1099,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
-    @_type_handler
+    @_type_handler()
     def __iadd__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Add a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1126,7 +1134,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self
 
-    @_type_handler
+    @_type_handler(True)
     def __sub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "subtract a number or another MultyPolinomial to this SinglePolynomial"
 
@@ -1151,7 +1159,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
-    @_type_handler
+    @_type_handler(True)
     def __rsub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "subtract this SinglePolynomial to a number or another MultyPolinomial"
         
@@ -1176,7 +1184,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
-    @_type_handler
+    @_type_handler(True)
     def __isub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Subtract a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1209,7 +1217,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self
 
-    @_type_handler
+    @_type_handler()
     def __mul__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1262,7 +1270,7 @@ class SinglePolynomial(MultyPolinomial):
         
         return self.__class__({power:coef*__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
-    @_type_handler
+    @_type_handler()
     def __imul__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this SinglePolynomial"
         

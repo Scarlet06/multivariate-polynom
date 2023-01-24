@@ -1721,31 +1721,39 @@ class MultyPolinomial:
                 raise TypeError(error)
             raise TypeError(f"unsupported operand type(s) for {operand}: {self.__class__.__name__} and {__o.__class__.__name__}.")
 
-    def _type_handler(func: Callable[[Self,Number|Self],Self]) -> Callable[[Self,Number|Self],Self]:
+    def _type_handler(invert:bool=False) -> Callable[[Self,Number|Self],Self]:
         "this decorator checks and handles all the polynomial types"
-        def transformer(self:type[Self], __o:Number|Self) -> Self:
-            # a type problem occours when __o is a subclass of MultyPolynoimial. So since I'm here I know for shure self is a Mp or a CMP, but __o can be anything
-            # first it checks if has the __complex__ method, so it can be a CMP or a CSP, but it has the toCM iff it is a CSM.
-            # since I still don't know if self is CMP or not, I call the method on the CMP(__o), but if __'o doesn't have the toCM method it already is a CMP and as beforse uses the func on it.
-            # Now self could still be CMP or MP, but it is sure that __o is not complex, in fact it can be SP or MP, and iff is SP it has the method toMP
-            # and calls func on its transormation, else it calls func directly.
-            # In the end, if __o isn't a polynomial, it checks if __o is a Number with _check__is_Number and than calls the func
-            if isinstance(__o,MultyPolinomial):
-                if hasattr(__o,'__complex__'):
-                    if hasattr(__o,'toComplexMulty'):
-                        return func(__o.toComplexMulty(),self)
-                    return func(__o,self)
-                if hasattr(__o,'toMulty'):
-                    return func(self,__o.toMulty())
+        def inverter(func: Callable[[Self,Number|Self],Self]) -> Callable[[Self,Number|Self],Self]:
+            "This fuction was added to handle the inverse for subtractions"
+            def transformer(self:type[Self], __o:Number|Self) -> Self:
+                # a type problem occours when __o is a subclass of MultyPolynoimial. So since I'm here I know for shure self is a Mp or a CMP, but __o can be anything
+                # first it checks if has the __complex__ method, so it can be a CMP or a CSP, but it has the toCM iff it is a CSM.
+                # since I still don't know if self is CMP or not, I call the method on the CMP(__o), but if __'o doesn't have the toCM method it already is a CMP and as beforse uses the func on it.
+                # Now self could still be CMP or MP, but it is sure that __o is not complex, in fact it can be SP or MP, and iff is SP it has the method toMP
+                # and calls func on its transormation, else it calls func directly.
+                # In the end, if __o isn't a polynomial, it checks if __o is a Number with _check__is_Number and than calls the func
+                if isinstance(__o,MultyPolinomial):
+                    if hasattr(__o,'__complex__'):
+                        if hasattr(__o,'toComplexMulty'):
+                            if invert:
+                                return -func(__o.toComplexMulty(),self)
+                            return func(__o.toComplexMulty(),self)
+                        elif invert:
+                            return -func(__o,self)
+                        return func(__o,self)
+                    if hasattr(__o,'toMulty'):
+                        return func(self,__o.toMulty())
 
+                    return func(self,__o)
+
+                self._check__is_Number(__o, func.__name__)
                 return func(self,__o)
+            
+            return transformer
 
-            self._check__is_Number(__o, func.__name__)
-            return func(self,__o)
-        
-        return transformer
+        return inverter
 
-    @_type_handler
+    @_type_handler()
     def __add__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
         if isinstance(__o, MultyPolinomial):
@@ -1800,7 +1808,7 @@ class MultyPolinomial:
 
         return self.__add__(__o)
 
-    @_type_handler
+    @_type_handler()
     def __iadd__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1853,7 +1861,7 @@ class MultyPolinomial:
         
         return self
 
-    @_type_handler
+    @_type_handler(True)
     def __sub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1901,7 +1909,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
     
-    @_type_handler
+    @_type_handler(True)
     def __rsub__(self, __o:Number | Self) -> Self:
         "subtract this MultyPolinomial to a number or another MultyPolinomial"
 
@@ -1943,7 +1951,7 @@ class MultyPolinomial:
         power = self._get_key_0(len(self._unkn))
         return self.__class__({p:-c if p!=power else -c+__o for p,c in self._pcoef.items()}, self._unkn, {p:c[:] for p,c in self._icoef.items()})
     
-    @_type_handler
+    @_type_handler(True)
     def __isub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1997,7 +2005,7 @@ class MultyPolinomial:
         
         return self
 
-    @_type_handler
+    @_type_handler()
     def __mul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
         
@@ -2067,7 +2075,7 @@ class MultyPolinomial:
 
         return self.__mul__(__o)
 
-    @_type_handler
+    @_type_handler()
     def __imul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
 

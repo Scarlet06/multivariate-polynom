@@ -453,7 +453,7 @@ if __name__ == '__main__':
     s = SinglePolynomial.fromText("1+x")
     cs = ComplexSinglePolynomial.fromText("-(1)*x")
     from itertools import product
-    for op in ('__isub__','__add__','__radd__','__iadd__','__sub__','__rsub__','__mul__','__rmul__','__imul__'):
+    for op in ('__sub__','__add__','__radd__','__iadd__','__isub__','__rsub__','__mul__','__rmul__','__imul__'):
         input(op)
         for i,j in product((m,cm,s,cs),repeat=2):
             try:

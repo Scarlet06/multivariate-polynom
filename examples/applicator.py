@@ -64,7 +64,7 @@ class applicator:
         t = self.m.copy()
         t.evaluate_ip([self.c]*len(self.m))
 
-        return str(all((r==s,r==t,t==s)))
+        return str(r==s and r==t)
 
     def partial(self) -> bool:
         "this method applies a partial derivation"
@@ -134,6 +134,6 @@ class applicator:
         print(f"{chr(9504)}{chr(9472)}{'n integral [a,b]:':<20}{self.integralAB_n()}")
 
 if __name__ == "__main__":
-    from creator_MP import m_random_unkn
-    applicator(m_random_unkn, 2, 5)
+    from creator_CMP import cm_text_unkn,cm1
+    applicator(cm1, -2, 6)
     

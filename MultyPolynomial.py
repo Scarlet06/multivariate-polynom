@@ -1721,10 +1721,43 @@ class MultyPolinomial:
                 raise TypeError(error)
             raise TypeError(f"unsupported operand type(s) for {operand}: {self.__class__.__name__} and {__o.__class__.__name__}.")
 
-    def _type_handler(invert:bool=False) -> Callable[[Self,Number|Self],Self]:
+    def _type_handler(invert:int=0b00) -> Callable[[Self,Number|Self],Self]:
         "this decorator checks and handles all the polynomial types"
         def inverter(func: Callable[[Self,Number|Self],Self]) -> Callable[[Self,Number|Self],Self]:
             "This fuction was added to handle the inverse for subtractions"
+
+            match invert:
+                case 0b00:
+                    #base case
+                    def replacer(self:type[Self], __o:Number|Self) -> Self:
+                        "it just flips the objects"
+                        if hasattr(__o,'toComplexMulty'):
+                            __o = __o.toComplexMulty()
+                        return func(__o,self)
+                case 0b01:
+                    #sub case
+                    def replacer(self:type[Self], __o:Number|Self) -> Self:
+                        "it returns the opposite result with the flipped objects"
+                        if hasattr(__o,'toComplexMulty'):
+                            __o = __o.toComplexMulty()
+                        return -func(__o,self)
+                case 0b10:
+                    #i case
+                    def replacer(self:type[Self], __o:Number|Self) -> Self:
+                        "it updates self for ip operations"
+                        if hasattr(__o,'toComplexMulty'):
+                            __o = __o.toComplexMulty()
+                        self.update(__o.__getattribute__(func.__name__.replace("i",""))(self))
+                        return self
+                case 0b11:
+                    #isub case
+                    def replacer(self:type[Self], __o:Number|Self) -> Self:
+                        "it updates self as the opposite result with the flipped objects"
+                        if hasattr(__o,'toComplexMulty'):
+                            __o = __o.toComplexMulty()
+                        self.update(-__o.__getattribute__(func.__name__.replace("i",""))(self))
+                        return self
+
             def transformer(self:type[Self], __o:Number|Self) -> Self:
                 # a type problem occours when __o is a subclass of MultyPolynoimial. So since I'm here I know for shure self is a Mp or a CMP, but __o can be anything
                 # first it checks if has the __complex__ method, so it can be a CMP or a CSP, but it has the toCM iff it is a CSM.
@@ -1734,13 +1767,7 @@ class MultyPolinomial:
                 # In the end, if __o isn't a polynomial, it checks if __o is a Number with _check__is_Number and than calls the func
                 if isinstance(__o,MultyPolinomial):
                     if hasattr(__o,'__complex__'):
-                        if hasattr(__o,'toComplexMulty'):
-                            if invert:
-                                return -func(__o.toComplexMulty(),self)
-                            return func(__o.toComplexMulty(),self)
-                        elif invert:
-                            return -func(__o,self)
-                        return func(__o,self)
+                        return replacer(self,__o)
                     if hasattr(__o,'toMulty'):
                         return func(self,__o.toMulty())
 
@@ -1748,7 +1775,7 @@ class MultyPolinomial:
 
                 self._check__is_Number(__o, func.__name__)
                 return func(self,__o)
-            
+
             return transformer
 
         return inverter
@@ -1774,7 +1801,9 @@ class MultyPolinomial:
 
             # here it does the sum
             for power, coef in __o._pcoef.items():
-                if update:
+                if not coef:
+                    continue
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in t:
@@ -1782,8 +1811,13 @@ class MultyPolinomial:
                 else:
                     t[power] = coef
 
+            if not t:
+                t[self._get_key_0(len(unkn))]=0
+
             for power, coef in __o._icoef.items():
-                if update:
+                if not coef[1]:
+                    continue
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in tt:
@@ -1808,7 +1842,7 @@ class MultyPolinomial:
 
         return self.__add__(__o)
 
-    @_type_handler()
+    @_type_handler(0b10)
     def __iadd__(self, __o:Number | Self) -> Self:
         "Add a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1828,7 +1862,9 @@ class MultyPolinomial:
                 tt = {power:coef.copy() for power,coef in self._icoef.items()}
 
             for power, coef in __o._pcoef.items():
-                if update:
+                if not coef:
+                    continue
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in t:
@@ -1836,7 +1872,12 @@ class MultyPolinomial:
                 else:
                     t[power] = coef
 
+            if not t:
+                t[self._get_key_0(len(unkn))]=0
+
             for power, coef in __o._icoef.items():
+                if not coef[1]:
+                    continue
                 if update:
                     power = lam(power.split("-"),__o._unkn)
 
@@ -1861,7 +1902,7 @@ class MultyPolinomial:
         
         return self
 
-    @_type_handler(True)
+    @_type_handler(0b01)
     def __sub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1881,7 +1922,9 @@ class MultyPolinomial:
                 tt = {power:coef.copy() for power,coef in self._icoef.items()}
 
             for power, coef in __o._pcoef.items():
-                if update:
+                if not coef:
+                    continue
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in t:
@@ -1889,8 +1932,13 @@ class MultyPolinomial:
                 else:
                     t[power] = -coef
 
+            if not t:
+                t[self._get_key_0(len(unkn))]=0
+
             for power, coef in __o._icoef.items():
-                if update:
+                if not coef[1]:
+                    continue
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in tt:
@@ -1909,7 +1957,7 @@ class MultyPolinomial:
         
         return self.__class__(t, self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
     
-    @_type_handler(True)
+    @_type_handler(0b01)
     def __rsub__(self, __o:Number | Self) -> Self:
         "subtract this MultyPolinomial to a number or another MultyPolinomial"
 
@@ -1929,7 +1977,10 @@ class MultyPolinomial:
                 tt = {power:[coef[0],-coef[1]] for power,coef in self._icoef.items()}
 
             for power, coef in __o._pcoef.items():
-                if update:
+                if not coef:
+                    continue
+
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in t:
@@ -1937,8 +1988,14 @@ class MultyPolinomial:
                 else:
                     t[power] = coef
 
+            if not t:
+                t[self._get_key_0(len(unkn))]=0
+
             for power, coef in __o._icoef.items():
-                if update:
+                if not coef[1]:
+                    continue
+
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in tt:
@@ -1951,7 +2008,7 @@ class MultyPolinomial:
         power = self._get_key_0(len(self._unkn))
         return self.__class__({p:-c if p!=power else -c+__o for p,c in self._pcoef.items()}, self._unkn, {p:c[:] for p,c in self._icoef.items()})
     
-    @_type_handler(True)
+    @_type_handler(0b11)
     def __isub__(self, __o:Number | Self) -> Self:
         "subtract a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -1970,9 +2027,10 @@ class MultyPolinomial:
                 t = self._pcoef.copy()
                 tt = {power:coef.copy() for power,coef in self._icoef.items()}
 
-
             for power, coef in __o._pcoef.items():
-                if update:
+                if not coef:
+                    continue
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in t:
@@ -1980,8 +2038,13 @@ class MultyPolinomial:
                 else:
                     t[power] = -coef
 
+            if not t:
+                t[self._get_key_0(len(unkn))]=0
+
             for power, coef in __o._icoef.items():
-                if update:
+                if not coef[1]:
+                    continue
+                elif update:
                     power = lam(power.split("-"),__o._unkn)
 
                 if power in tt:
@@ -2030,29 +2093,54 @@ class MultyPolinomial:
             tt={}
 
             for power,coef in ts.items():
+
+                if not coef:
+                    continue
+
                 power=power.split("-")
                 for po,co in to.items():
+                    if not co:
+                        continue
+
                     k = "-".join(map(join,power,po.split("-")))
                     if k in t:
                         t[k] += coef * co
                         continue
                     t[k] = coef * co
                 for po,co in tto.items():
+                    if not co[1]:
+                        continue
+
                     k = "-".join(map(join,power,po.split("-")))
                     if k in tt:
                         tt[k][1] += coef * co[1]
                         continue
                     tt[k] =["", coef * co[1]]
 
+            if not t:
+                t[self._get_key_0(len(unkn))]=0
+
             for power,coef in tts.items():
+
+                if not coef[1]:
+                    continue
+
                 power=power.split("-")
                 for po,co in to.items():
+                    if not co[1]:
+                        continue
+
                     k = "-".join(map(join,power,po.split("-")))
                     if k in tt:
                         tt[k][1] += coef[1] * co
                         continue
                     tt[k] =["", coef[1] * co]
+
                 for po,co in tto.items():
+
+                    if not co[1]:
+                        continue
+
                     k = "-".join(map(join,power,po.split("-")))
                     if k in tt:
                         tt[k][1] += coef[1] * co[1]
@@ -2075,7 +2163,7 @@ class MultyPolinomial:
 
         return self.__mul__(__o)
 
-    @_type_handler()
+    @_type_handler(0b10)
     def __imul__(self, __o:Number | Self) -> Self:
         "Multiplicate a number or another MultyPolinomial to this MultyPolinomial"
 
@@ -2101,29 +2189,48 @@ class MultyPolinomial:
             self._unkn = unkn
 
             for power,coef in ts.items():
+
+                if not coef:
+                    continue
+
                 power=power.split("-")
                 for po,co in to.items():
+                    if not co:
+                        continue
+
                     k = "-".join(map(join,power,po.split("-")))
                     if k in self._pcoef:
                         self._pcoef[k] += coef * co
                         continue
                     self._pcoef[k] = coef * co
+
                 for po,co in tto.items():
+                    if not co[1]:
+                        continue
+
                     k = "-".join(map(join,power,po.split("-")))
                     if k in self._icoef:
                         self._icoef[k][1] += coef * co[1]
                         continue
                     self._icoef[k] =["", coef * co[1]]
 
+            if not self._pcoef:
+                self._pcoef[self._get_key_0(len(unkn))]=0
+
             for power,coef in tts.items():
                 power=power.split("-")
                 for po,co in to.items():
+                    if not co[1]:
+                        continue
+
                     k = "-".join(map(join,power,po.split("-")))
                     if k in self._icoef:
                         self._icoef[k][1] += coef[1] * co
                         continue
                     self._icoef[k] =["", coef[1] * co]
                 for po,co in tto.items():
+                    if not co[1]:
+                        continue
                     k = "-".join(map(join,power,po.split("-")))
                     if k in self._icoef:
                         self._icoef[k][1] += coef[1] * co[1]
@@ -2211,7 +2318,7 @@ class MultyPolinomial:
     def __divmod__(self, __o:Number|Self) -> tuple[Self,Self]:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the quotient and the rest
+        This method returns the quotient and the remainder
         """
 
         if not __o:
@@ -2262,7 +2369,7 @@ class MultyPolinomial:
                 #that's the monom for this operation
                 s =self.__class__({power:coef}, self._unkn)
 
-                #it updates quotient and rest
+                #it updates quotient and remainder
                 _self -= _otemp*s
                 p+=s
 
@@ -2275,7 +2382,7 @@ class MultyPolinomial:
     def __rdivmod__(self, __o:Self) -> tuple[Self,Self]:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the quotient and the rest
+        This method returns the quotient and the remainder
         """
 
         if not self:
@@ -2339,7 +2446,7 @@ class MultyPolinomial:
                 #that's the monom for this operation
                 s =self.__class__({power:coef}, self._unkn)
                 
-                #it updates quotient and rest
+                #it updates quotient and remainder
                 _self -= _otemp*s
                 p+=s
 
@@ -2414,7 +2521,7 @@ class MultyPolinomial:
                 #that's the monom for this operation
                 s =self.__class__({power:coef}, self._unkn)
 
-                #it updates quotient and rest
+                #it updates quotient and remainder
                 _self -= _otemp*s
                 self+=s
 
@@ -2432,7 +2539,7 @@ class MultyPolinomial:
     def __mod__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the rest
+        This method returns the remainder
         """
 
         if not __o:
@@ -2477,7 +2584,7 @@ class MultyPolinomial:
                 #that's used to calculate the coeff
                 coef = n[0](values,True)/m[0](values,True)
 
-                #it updates rest
+                #it updates remainder
                 _self -= _otemp*self.__class__({power:coef}, self._unkn)
 
             return _self
@@ -2487,7 +2594,7 @@ class MultyPolinomial:
         return self.__class__({power:coef%__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]%__o] for power,coef in self._icoef.items()})
         
     def __rmod__(self,__o:Self) -> Self:
-        "the rest of an Euclidean division"
+        "the remainder of an Euclidean division"
 
         if not self:
             raise ZeroDivisionError("Cannot divide by 0")
@@ -2500,7 +2607,7 @@ class MultyPolinomial:
     def __imod__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and the given number or MultyPolinomial
-        This method returns the rest
+        This method returns the remainder
         """
 
         if not __o:
@@ -2542,7 +2649,7 @@ class MultyPolinomial:
                 #that's used to calculate the coeff
                 coef = n[0](values,True)/m[0](values,True)
                 
-                #it updates rest
+                #it updates remainder
                 self -= _otemp*self.__class__({power:coef}, self._unkn)
 
             return self
@@ -2557,5 +2664,6 @@ class MultyPolinomial:
         return self
 
 if __name__ == '__main__':
+    print(type(0b10))
     x = MultyPolinomial.fromText("-x-x*y^2","y",{"0-1":["c2",5]})*2
     print(x)

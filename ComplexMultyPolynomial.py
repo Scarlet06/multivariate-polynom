@@ -296,6 +296,8 @@ class ComplexMultyPolynomial(MultyPolinomial):
                     s+=f"{coef.imag:+}j"
                 s+=")"
             else:
+                if floor(coef) ==coef:
+                    coef=floor(coef)
                 s+=f"{coef:+}"
 
             if not any(t):
@@ -326,6 +328,8 @@ class ComplexMultyPolynomial(MultyPolinomial):
                     s+=f"{coef[1].imag:+}j"
                 s+=f")*{coef[0]}"
             else:
+                if floor(coef[1]) ==coef[1]:
+                    coef[1]=floor(coef[1])
                 s+=f"{coef[1]:+}*{coef[0]}"
 
             if not any(t):
@@ -543,8 +547,7 @@ if __name__ == '__main__':
     c = ComplexMultyPolynomial.fromText("(j)",("x",))
     j = ComplexMultyPolynomial.random(3,"x")
     print(3*(c*2+j)==(2*c- (-j))*3)
-    from examples import applicator
-    applicator(ComplexMultyPolynomial({'5-7': 1, '0-0': -2j}, ('x', 'y'), {}),-2,6)
-    m = MultyPolinomial.random(5)
-    m+=j
-    print(m,type(m))
+    print(c)
+    j-=c
+    print(c)
+    # print(c)

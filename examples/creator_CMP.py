@@ -48,4 +48,4 @@ cm_random_dict = CMulty_XY.random(4,"x",y=1)
 
 
 if __name__ == '__main__':
-    print(cm_text)
+    print(cm_random_dict)

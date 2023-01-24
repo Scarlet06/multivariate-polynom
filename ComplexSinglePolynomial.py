@@ -224,6 +224,8 @@ class ComplexSinglePolynomial(SinglePolynomial,ComplexMultyPolynomial):
                     s+=f"{coef.imag:+}j"
                 s+=")"
             else:
+                if floor(coef)==coef:
+                    coef=floor(coef)
                 s+=f"{coef:+}"
 
             if not power:
@@ -247,6 +249,8 @@ class ComplexSinglePolynomial(SinglePolynomial,ComplexMultyPolynomial):
                     s+=f"{coef[1].imag:+}j"
                 s+=f")*{coef[0]}"
             else:
+                if floor(coef[1]) ==coef[1]:
+                    coef[1]=floor(coef[1])
                 s+=f"{coef[1]:+}*{coef[0]}"
 
             if not power:
@@ -448,12 +452,12 @@ class ComplexSinglePolynomial(SinglePolynomial,ComplexMultyPolynomial):
 
 
 if __name__ == '__main__':
-    m = MultyPolinomial.fromText("x+y")
-    cm = ComplexMultyPolynomial.fromText("(j)*x+y")
-    s = SinglePolynomial.fromText("1+x")
-    cs = ComplexSinglePolynomial.fromText("-(1)*x")
+    m = MultyPolinomial.fromText("x+1")
+    cm = ComplexMultyPolynomial.fromText("(j)*x+1")
+    s = SinglePolynomial.fromText("x")
+    cs = ComplexSinglePolynomial.fromText("(j)*x")
     from itertools import product
-    for op in ('__sub__','__add__','__radd__','__iadd__','__isub__','__rsub__','__mul__','__rmul__','__imul__'):
+    for op in ('__mul__','__rmul__','__add__','__radd__','__sub__','__rsub__'):
         input(op)
         for i,j in product((m,cm,s,cs),repeat=2):
             try:

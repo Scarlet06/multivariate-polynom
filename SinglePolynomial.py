@@ -1041,10 +1041,49 @@ class SinglePolynomial(MultyPolinomial):
 
 
     ## OPERATION WITH MULTIVARIATIVE POLYNOMIALS ##
-    def _type_handler(invert:bool=False) -> Callable[[Self,Number|Self],Self]:
+    def _type_handler(invert:int=0b00) -> Callable[[Self,Number|Self],Self]:
         "this decorator checks and handles all the polynomial types"
         def inverter(func: Callable[[Self,Number|Self],Self]) -> Callable[[Self,Number|Self],Self]:
             "This fuction was added to handle the inverse for subtractions"
+
+            match invert:
+                case 0b00:
+                    #base case
+                    def replacer1(self:type[Self], __o:Number|Self) -> Self:
+                        "it just flips the objects"
+                        return func(__o,self)
+                    def replacer2(self:type[Self], __o:Number|Self) -> Self:
+                        "it just flips the objects"
+                        return __o.__getattribute__(func.__name__)(self.toMulty())
+                case 0b01:
+                    #sub case
+                    def replacer1(self:type[Self], __o:Number|Self) -> Self:
+                        "it returns the opposite result with the flipped objects"
+                        return -func(__o,self)
+                    def replacer2(self:type[Self], __o:Number|Self) -> Self:
+                        "it returns the opposite result with the flipped objects"
+                        return -__o.__getattribute__(func.__name__)(self.toMulty())
+                case 0b10:
+                    #i case
+                    def replacer1(self:type[Self], __o:Number|Self) -> Self:
+                        "it updates self for ip operations"
+                        self.update(__o.__getattribute__(func.__name__.replace("i",""))(self))
+                        return self
+                    def replacer2(self:type[Self], __o:Number|Self) -> Self:
+                        "it updates self for ip operations"
+                        self.update(__o.__getattribute__(func.__name__.replace("i",""))(self.toMulty()))
+                        return self
+                case 0b11:
+                    #isub case
+                    def replacer1(self:type[Self], __o:Number|Self) -> Self:
+                        "it updates self as the opposite result with the flipped objects"
+                        self.update(-__o.__getattribute__(func.__name__.replace("i",""))(self))
+                        return self
+                    def replacer2(self:type[Self], __o:Number|Self) -> Self:
+                        "it updates self as the opposite result with the flipped objects"
+                        self.update(-__o.__getattribute__(func.__name__.replace("i",""))(self.toMulty()))
+                        return self
+
             def transformer(self:type[Self], __o:Number|Self) -> Self:
                 # since we call this function here, self ahs to be one of SP or CSP. So it checks if __o is a SP with the __complex method -> so it is a CSP
                 # if it iis, it uses func on __o else __o is a SP and since self can still be SP or CSP func is used on it first
@@ -1055,17 +1094,13 @@ class SinglePolynomial(MultyPolinomial):
                 if isinstance(__o,MultyPolinomial):
                     if isinstance(__o,SinglePolynomial):
                         if hasattr(__o,'__complex__'):
-                            if invert:
-                                return -func(__o,self)
-                            return func(__o,self)
+                            return replacer1(self,__o)
                         return func(self,__o)
 
                     if hasattr(self,'toComplexMulty'):
                         t = self.toComplexMulty()
                         return t.__getattribute__(func.__name__)(__o)
-                    elif invert:
-                        return -__o.__getattribute__(func.__name__)(self.toMulty())
-                    return __o.__getattribute__(func.__name__)(self.toMulty())
+                    return replacer2(self,__o)
                 
                 self._check__is_Number(__o, func.__name__)
                 return func(self,__o)
@@ -1099,7 +1134,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
-    @_type_handler()
+    @_type_handler(0b10)
     def __iadd__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Add a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1134,7 +1169,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self
 
-    @_type_handler(True)
+    @_type_handler(0b01)
     def __sub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "subtract a number or another MultyPolinomial to this SinglePolynomial"
 
@@ -1159,7 +1194,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
-    @_type_handler(True)
+    @_type_handler(0b01)
     def __rsub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "subtract this SinglePolynomial to a number or another MultyPolinomial"
         
@@ -1184,7 +1219,7 @@ class SinglePolynomial(MultyPolinomial):
 
         return self.__class__(t,self._unkn, {power:coef.copy() for power,coef in self._icoef.items()})
 
-    @_type_handler(True)
+    @_type_handler(0b11)
     def __isub__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Subtract a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1270,7 +1305,7 @@ class SinglePolynomial(MultyPolinomial):
         
         return self.__class__({power:coef*__o for power,coef in self._pcoef.items()},self._unkn, {power:[coef[0],coef[1]*__o] for power,coef in self._icoef.items()})
 
-    @_type_handler()
+    @_type_handler(0b10)
     def __imul__(self, __o: Number | Self) -> Self|MultyPolinomial:
         "Multiplicate a number or another MultyPolinomial to this SinglePolynomial"
         
@@ -1333,7 +1368,7 @@ class SinglePolynomial(MultyPolinomial):
     def __divmod__(self, __o:Number|Self|MultyPolinomial) -> tuple[Self|MultyPolinomial,Self|MultyPolinomial]:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the quotient and the rest
+        This method returns the quotient and the remainder
         """
 
         if not __o:
@@ -1358,7 +1393,7 @@ class SinglePolynomial(MultyPolinomial):
                         t._pcoef.clear()
                         t._pcoef[i-j] = _self._pcoef[i]/__o._pcoef[j]
                         
-                        #it updates quotient and rest
+                        #it updates quotient and remainder
                         _self -= __o*t
                         p+=t
 
@@ -1399,7 +1434,7 @@ class SinglePolynomial(MultyPolinomial):
                         t._pcoef.clear()
                         t._pcoef[i-j] = _self._pcoef[i]/__o._pcoef[j]
                         
-                        #it updates quotient and rest
+                        #it updates quotient and remainder
                         _self -= __o*t
                         p+=t
 
@@ -1440,7 +1475,7 @@ class SinglePolynomial(MultyPolinomial):
                         t._pcoef.clear()
                         t._pcoef[i-j] = _self._pcoef[i]/__o._pcoef[j]
                         
-                        #it updates quotient and rest
+                        #it updates quotient and remainder
                         _self -= __o*t
                         self+=t
 
@@ -1461,7 +1496,7 @@ class SinglePolynomial(MultyPolinomial):
     def __mod__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and teh given number or MultyPolinomial
-        This method returns the rest
+        This method returns the remainder
         """
 
         if not __o:
@@ -1483,7 +1518,7 @@ class SinglePolynomial(MultyPolinomial):
                         t._pcoef.clear()
                         t._pcoef[i-j] = _self._pcoef[i]/__o._pcoef[j]
                         
-                        #it updates quotient and rest
+                        #it updates quotient and remainder
                         _self -= __o*t
 
                     return _self
@@ -1498,7 +1533,7 @@ class SinglePolynomial(MultyPolinomial):
     def __imod__(self, __o:Number|Self) -> Self:
         """
         Euclidean division, or division with remainder between this MultyPolinomial and the given number or MultyPolinomial
-        This method returns the rest
+        This method returns the remainder
         """
 
         if not __o:
@@ -1517,7 +1552,7 @@ class SinglePolynomial(MultyPolinomial):
                         t._pcoef.clear()
                         t._pcoef[i-j] = self._pcoef[i]/__o._pcoef[j]
                         
-                        #it updates quotient and rest
+                        #it updates quotient and remainder
                         self -= __o*t
 
                     return self

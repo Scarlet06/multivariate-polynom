@@ -2127,7 +2127,7 @@ class MultyPolinomial:
 
                 power=power.split("-")
                 for po,co in to.items():
-                    if not co[1]:
+                    if not co:
                         continue
 
                     k = "-".join(map(join,power,po.split("-")))
@@ -2220,7 +2220,7 @@ class MultyPolinomial:
             for power,coef in tts.items():
                 power=power.split("-")
                 for po,co in to.items():
-                    if not co[1]:
+                    if not co:
                         continue
 
                     k = "-".join(map(join,power,po.split("-")))
@@ -2664,6 +2664,13 @@ class MultyPolinomial:
         return self
 
 if __name__ == '__main__':
-    print(type(0b10))
     x = MultyPolinomial.fromText("-x-x*y^2","y",{"0-1":["c2",5]})*2
-    print(x)
+    y = MultyPolinomial.random(7,"x",y=3)
+    
+    print(x.__format__('.2f;;<50'),y.__format__('.2f;;>50'))
+    y+=x
+    print(x.__format__('.2f;;<50'),y.__format__('.2f;;>50'))
+    y-=x
+    print(x.__format__('.2f;;<50'),y.__format__('.2f;;>50'))
+    y*=x
+    print(x.__format__('.2f;;<50'),y.__format__('.2f;;>50'))
